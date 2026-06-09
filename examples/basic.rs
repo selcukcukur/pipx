@@ -1,4 +1,4 @@
-use rsflux::pipeline::{Pipeline, Pipe};
+use rustpipe::pipeline::{Pipeline, Pipe};
 
 struct TrimStep;
 impl Pipe<String> for TrimStep {
