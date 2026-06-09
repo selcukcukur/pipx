@@ -1,25 +1,25 @@
-pub trait Pipe<T> {
-    fn handle(&self, input: T) -> T;
+pub trait Pipe<T, E> {
+    fn handle(&self, input: T) -> Result<T, E>;
 }
 
-pub struct Pipeline<T> {
-    steps: Vec<Box<dyn Pipe<T>>>,
+pub struct Pipeline<T, E> {
+    steps: Vec<Box<dyn Pipe<T, E>>>,
 }
 
-impl<T> Pipeline<T> {
+impl<T, E> Pipeline<T, E> {
     pub fn new() -> Self {
         Self { steps: Vec::new() }
     }
 
-    pub fn add<P: Pipe<T> + 'static>(mut self, step: P) -> Self {
+    pub fn add<P: Pipe<T, E> + 'static>(mut self, step: P) -> Self {
         self.steps.push(Box::new(step));
         self
     }
 
-    pub fn execute(&self, mut input: T) -> T {
+    pub fn execute(&self, mut input: T) -> Result<T, E> {
         for step in &self.steps {
-            input = step.handle(input);
+            input = step.handle(input)?;
         }
-        input
+        Ok(input)
     }
 }

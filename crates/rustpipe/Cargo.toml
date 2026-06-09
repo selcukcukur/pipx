@@ -38,3 +38,7 @@
 
     # Path to the library entry point (main source file)
     path = "src/lib.rs"
+
+[[example]]
+    name = "basic"
+    path = "../../examples/basic.rs"
