@@ -40,6 +40,10 @@ tokio = { version ="1.52.3", features = ["full"]}
     # Path to the library entry point (main source file)
     path = "src/lib.rs"
 
+[features]
+    default = []
+    async = ["tokio"]
+
 [[example]]
     name = "basic"
     path = "../../examples/basic.rs"
