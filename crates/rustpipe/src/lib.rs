@@ -487,6 +487,22 @@ impl<T, E> Pipeline<T, E> {
         }
         Ok(input)
     }
+
+    /// Adds a step that runs only if condition is true.
+    pub fn when<F>(mut self, condition: bool, step: Box<dyn Pipe<T, E>>) -> Self {
+        if condition {
+            self.steps.push(step);
+        }
+        self
+    }
+
+    /// Adds a step that runs only if condition is false.
+    pub fn unless<F>(mut self, condition: bool, step: Box<dyn Pipe<T, E>>) -> Self {
+        if !condition {
+            self.steps.push(step);
+        }
+        self
+    }
 }
 
 #[cfg(feature = "async")]
