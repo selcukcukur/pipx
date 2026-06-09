@@ -5,15 +5,21 @@ pub trait Pipe<T, E> {
 pub struct Pipeline<T, E> {
     input: Option<T>,
     steps: Vec<Box<dyn Pipe<T, E>>>,
+    method: String,
 }
 
 impl<T, E> Pipeline<T, E> {
     pub fn new() -> Self {
-        Self { input: None, steps: Vec::new() }
+        Self { input: None, steps: Vec::new(), method: "handle".to_string() }
     }
 
     pub fn send(mut self, input: T) -> Self {
         self.input = Some(input);
+        self
+    }
+
+    pub fn via(mut self, method: &str) -> Self {
+        self.method = method.to_string();
         self
     }
 
