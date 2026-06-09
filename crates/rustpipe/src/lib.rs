@@ -1,7 +1,10 @@
+mod error;
+
 #[cfg(feature = "async")]
 use std::future::Future;
 #[cfg(feature = "async")]
 use std::pin::Pin;
+use crate::error::{PipelineError, PipelineResult};
 
 /// Defines a single processing step in a pipeline.
 ///
@@ -107,7 +110,7 @@ pub struct Pipeline<T, E> {
     taps: Vec<Box<dyn Fn(&T)>>
 }
 
-impl<T, E> Pipeline<T, E> {
+impl<T, E: std::fmt::Debug> Pipeline<T, E> {
     /// Creates a new, empty pipeline instance.
     ///
     /// # Behavior
@@ -229,15 +232,15 @@ impl<T, E> Pipeline<T, E> {
     ///     assert_eq!(result.unwrap(), "Recovered from: failure");
     /// }
     /// ```
-    pub fn rescue<F>(self, f: F) -> Result<T, E>
+    pub fn rescue<F>(self, f: F) -> PipelineResult<T>
     where
-        F: FnOnce(E) -> T,
+        F: FnOnce(PipelineError) -> T,
     {
-        let mut input = self.input.expect("Pipeline input not set");
+        let mut input = self.input.ok_or(PipelineError::InputMissing)?;
         for step in &self.steps {
             match step.handle(input) {
                 Ok(val) => input = val,
-                Err(err) => return Ok(f(err)),
+                Err(err) => return Ok(f(PipelineError::StepFailure(format!("{:?}", err)))),
             }
         }
         Ok(input)
@@ -436,17 +439,16 @@ impl<T, E> Pipeline<T, E> {
     ///     assert_eq!(result.unwrap(), "HELLO RUSTPIPE");
     /// }
     /// ```
-    pub fn then_return(self) -> Result<T, E> {
-        let mut input = self.input.expect("Pipeline input not set");
+    pub fn then_return(self) -> PipelineResult<T> {
+        let mut input = self.input.ok_or(PipelineError::InputMissing)?;
         for step in &self.steps {
-            input = step.handle(input)?;
+            input = step.handle(input).map_err(|e| PipelineError::StepFailure(format!("{:?}", e)))?;
             for tap in &self.taps {
                 tap(&input);
             }
         }
         Ok(input)
     }
-
 
     /// Adds a step that runs only if condition is true.
     pub fn when<F>(mut self, condition: bool, step: Box<dyn Pipe<T, E>>) -> Self {
