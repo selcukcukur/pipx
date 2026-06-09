@@ -17,9 +17,9 @@ impl<T, E> Pipeline<T, E> {
         self
     }
 
-    pub fn through<P: Pipe<T, E> + 'static>(mut self, steps: Vec<P>) -> Self {
+    pub fn through(mut self, steps: Vec<Box<dyn Pipe<T, E>>>) -> Self {
         for step in steps {
-            self.steps.push(Box::new(step));
+            self.steps.push(step);
         }
         self
     }

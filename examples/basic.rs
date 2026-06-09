@@ -17,7 +17,10 @@ impl Pipe<String, String> for UpperStep {
 fn main() {
     let result = Pipeline::new()
         .send("   hello rustpipe   ".to_string())
-        .through(vec![TrimStep, UpperStep])
+        .through(vec![
+            Box::new(TrimStep),
+            Box::new(UpperStep),
+        ])
         .then_return();
 
     match result {
