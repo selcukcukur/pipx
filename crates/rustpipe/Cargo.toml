@@ -30,6 +30,7 @@
     serde = { version = "1", features = ["derive"] }
     # Serde JSON is the JSON backend for Serde (used for structured log output)
     serde_json = "1"
+tokio = "1.52.3"
 
 # Library configuration
 [lib]
@@ -42,3 +43,7 @@
 [[example]]
     name = "basic"
     path = "../../examples/basic.rs"
+
+[[example]]
+    name = "async"
+    path = "../../examples/async.rs"
