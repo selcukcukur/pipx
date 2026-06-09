@@ -385,13 +385,15 @@ impl<T, E: std::fmt::Debug> Pipeline<T, E> {
     ///     assert_eq!(result.unwrap(), "Final result: HELLO RUSTPIPE");
     /// }
     /// ```
-    pub fn then<F, R>(self, f: F) -> Result<R, E>
+    pub fn then<F, R>(self, f: F) -> PipelineResult<R>
     where
         F: FnOnce(T) -> R,
     {
-        let mut input = self.input.expect("Pipeline input not set");
+        let mut input = self.input.ok_or(PipelineError::InputMissing)?;
         for step in &self.steps {
-            input = step.handle(input)?;
+            input = step
+                .handle(input)
+                .map_err(|e| PipelineError::StepFailure(format!("{:?}", e)))?;
         }
         Ok(f(input))
     }
@@ -442,7 +444,9 @@ impl<T, E: std::fmt::Debug> Pipeline<T, E> {
     pub fn then_return(self) -> PipelineResult<T> {
         let mut input = self.input.ok_or(PipelineError::InputMissing)?;
         for step in &self.steps {
-            input = step.handle(input).map_err(|e| PipelineError::StepFailure(format!("{:?}", e)))?;
+            input = step
+                .handle(input)
+                .map_err(|e| PipelineError::StepFailure(format!("{:?}", e)))?;
             for tap in &self.taps {
                 tap(&input);
             }
