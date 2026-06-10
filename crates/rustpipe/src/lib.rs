@@ -12,10 +12,22 @@ pub trait Pipe<T, E> {
     fn handle(&self, passable: T) -> Result<T, E>;
 }
 
-pub struct Pipeline<T, E> {
-    passable: Option<T>,
-    pipes: Vec<Box<dyn Pipe<T, E>>>,
-    taps: Vec<Box<dyn Fn(&T)>>
+pub struct Pipeline<TPipe, TError> {
+    /// The optional input value passed into the pipeline.
+    /// This is provided via [`Pipeline::send`] and becomes
+    /// the starting point for all subsequent pipes.
+    passable: Option<TPipe>,
+
+    /// A vector of boxed pipes (`Box<dyn Pipe<T, E>>`) that
+    /// will be executed sequentially. Each pipe transforms
+    /// the input or returns an error.
+    pipes: Vec<Box<dyn Pipe<TPipe, TError>>>,
+
+    /// A collection of observer closures (`Fn(&T)`) that run
+    /// after each successful pipe execution. These taps allow
+    /// side effects such as logging, metrics, or debugging
+    /// without modifying the pipeline value itself.
+    taps: Vec<Box<dyn Fn(&TPipe)>>,
 }
 
 impl<T, E: std::fmt::Debug> Pipeline<T, E> where PipelineError: From<E> {
