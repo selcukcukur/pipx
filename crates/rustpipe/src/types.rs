@@ -1,4 +1,4 @@
-use crate::error::PipelineError;
+use crate::errors::PipelineError;
 
 /// Convenient alias for results returned by pipeline operations.
 ///

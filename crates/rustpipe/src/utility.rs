@@ -1,11 +1,11 @@
 use std::any::type_name;
-use crate::error::StepFailure;
-use crate::error::PipelineError;
+use crate::errors::StepFailure;
+use crate::errors::PipelineError;
 
 /// Tekrarlayan StepFailure oluşturma
 pub fn step_failure_from<E: std::fmt::Debug, T>(err: E) -> StepFailure {
     StepFailure {
-        step: type_name::<Box<dyn crate::Pipe<T, E>>>(),
+        step: type_name::<E>(), // error tipinin adı
         message: format!("{:?}", err),
     }
 }
