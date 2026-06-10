@@ -97,6 +97,8 @@ impl<TPassable, TError: std::fmt::Debug> Pipeline<TPassable, TError> where Pipel
         Self {
             passable: None,
             pipes: Vec::new(),
+
+            #[cfg(feature = "taps")]
             taps: Vec::new(),
         }
     }
@@ -113,11 +115,13 @@ impl<TPassable, TError: std::fmt::Debug> Pipeline<TPassable, TError> where Pipel
         F: FnOnce(PipelineError) -> TPassable,
     {
         let mut passable = self.passable.ok_or(PipelineError::InputMissing)?;
-        for step in &self.pipes {
-            match step.handle(passable) {
+        for pipe in &self.pipes {
+            match pipe.handle(passable) {
                 Ok(val) => passable = val,
                 Err(err) => {
-                    return Err(utility::step_failure_from::<TError, TPassable>(err).into())
+                    // Recovery closure is actually used here
+                    let recovered = f(utility::step_failure_from::<TError, TPassable>(err).into());
+                    return Ok(recovered);
                 }
             }
         }
@@ -198,10 +202,29 @@ impl<TPassable, TError: std::fmt::Debug> Pipeline<TPassable, TError> where Pipel
         self
     }
 
-    /// Adds a step that runs only if condition is false.
-    pub fn unless(mut self, condition: bool, step: Box<dyn Pipe<TPassable, TError>>) -> Self {
+    /// Adds a pipe that runs only if the given condition evaluates to `false`.
+    ///
+    /// **Parameters**
+    /// - `condition` - A boolean flag; if `false`, the provided pipe will be added.
+    /// - `pipe` - A pipeline unit implementing [`Pipe`] that should run only when the condition is false.
+    ///
+    /// **Generics**
+    /// - `TPassable` - The type of the value that flows through the pipeline.
+    /// - `TError` - The error type returned when a pipe fails.
+    ///
+    /// **Returns**
+    /// - The pipeline instance with the conditional pipe included if `condition` is false.
+    /// - Otherwise, the pipeline instance unchanged.
+    ///
+    /// **Usage**
+    /// ```rust
+    /// let pipeline = Pipeline::new()
+    ///     .unless(cfg!(debug_assertions), Box::new(DebugPipe))
+    ///     .then_return();
+    /// ```
+    pub fn unless(mut self, condition: bool, pipe: Box<dyn Pipe<TPassable, TError>>) -> Self {
         if !condition {
-            self.pipes.push(step);
+            self.pipes.push(pipe);
         }
         self
     }
