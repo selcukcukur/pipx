@@ -236,23 +236,15 @@ cargo bench -p rustpipe
 Benchmarks cover large transform pipelines, large middleware pipelines, short-circuit middleware,
 and string transform workloads.
 
-## CI/CD
-
-`.github/workflows/ci.yml` runs on commits pushed to `main` or `master`, including merged pull
-requests. It checks rustfmt, cargo check, clippy, tests, all-features tests, benches, release build,
-and coverage reporting on Windows, Linux, and macOS where applicable.
-
-`.github/workflows/publish.yml` runs only when a GitHub release is published. It verifies all
-platforms and publishes crates when `CARGO_REGISTRY_TOKEN` is configured.
-
 ## Security
 
-If you think there is a security vulnerability in **rustpipe**, please email **Selçuk Çukur** at
-**<hello@selcukcukur.me>**. Please do not publicly post security vulnerabilities.
+If you think there is a security vulnerability in the **rustpipe**, you can help resolve the
+issue immediately by sending an e-mail to **Selçuk Çukur** at **<hello@selcukcukur.me>**. Please
+do not publicly post security vulnerabilities.
 
 ## License
 
-**Rustpipe** project is published as open source. The **[MIT License](license.md)** is used, which
+**rustpipe** project is published as open source. The **[MIT License](license.md)** is used, which
 is one of the well-known open source coding licenses. You can get detailed information about the license terms
 by visiting the link below.
 
