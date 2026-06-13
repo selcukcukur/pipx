@@ -3,9 +3,8 @@ name: Rustpipe Linting
 
 # Run linting for every push, every pull request, and manual dispatches.
 on:
-  push:
-  pull_request:
-  workflow_dispatch:
+  release:
+    types: [created]
 
 # Grant read-only repository access because this workflow only verifies code.
 permissions:

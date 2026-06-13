@@ -3,9 +3,8 @@ name: Rustpipe Benches
 
 # Run benchmark checks for every push, every pull request, and manual dispatches.
 on:
-  push:
-  pull_request:
-  workflow_dispatch:
+  release:
+    types: [created]
 
 # Grant read-only repository access because benchmark checks do not publish artifacts.
 permissions:
