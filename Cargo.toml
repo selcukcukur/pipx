@@ -1,12 +1,33 @@
-# Cargo.toml (root)
+# Workspace configurations
 [workspace]
+# List of member crates included in this workspace
 members = [
-    "crates/rustpipe"
-, "crates/rustpipe-macros"]
+    "crates/rustpipe",
+    "crates/rustpipe-macros"
+]
+# Use the latest cargo resolver for dependency resolution
 resolver = "3"
 
+# Debug configurations
+[profile.dev]
+# Enable debug symbols for better stack traces
+debug = true
+# Faster compilation by using multiple codegen units
+codegen-units = 256
+# No link-time optimization in debug mode (faster builds)
+lto = "off"
+# Keep panic messages for debugging
+panic = "unwind"
+# Lower optimization level for quicker builds
+opt-level = 0
+
+# Release configurations
 [profile.release]
+# Useful link-time optimization for maximum performance
 lto = "fat"
+# Single codegen unit for better optimization
 codegen-units = 1
+# Abort immediately on panic (smaller binary, faster fail)
 panic = "abort"
+# Highest optimization level for runtime performance
 opt-level = 3
