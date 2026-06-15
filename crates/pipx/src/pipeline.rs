@@ -4,8 +4,10 @@ use crate::types::{
     PipeType,
     PipelineResult
 };
-use crate::{utility, AsyncNext, Next};
+use crate::{Next};
 
+#[cfg(feature = "async")]
+use crate::{AsyncNext};
 #[cfg(feature = "async")]
 use crate::types::{AsyncPipeType};
 
@@ -155,7 +157,7 @@ where
     where
         F: Fn(TPassable) -> PipelineResult<TPassable, TError>,
     {
-        let passable = utility::require_passable(self.passable)?;
+        let passable = self.passable.ok_or(PipelineError::InputMissing)?;
 
         // Build the first continuation from the whole middleware slice. Every
         // middleware receives a shorter slice through `Next`, so execution stays
@@ -216,7 +218,7 @@ where
 {
     /// Finalizes the asynchronous middleware pipeline and returns the processed output.
     pub async fn then_return(self) -> PipelineResult<TPassable> {
-        let passable = utility::require_passable(self.passable)?;
+        let passable =  self.passable.ok_or(PipelineError::InputMissing)?;
         let destination = |passable| {
             Box::pin(async move { Ok(passable) })
                 as crate::types::AsyncPipeFuture<'_, TPassable, TError>

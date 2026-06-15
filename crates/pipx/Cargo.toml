@@ -45,25 +45,21 @@ name = "pipeline"
 harness = false
 
 [[bench]]
-name = "sync_transform"
+name = "pipeline_transform"
 harness = false
 
 [[bench]]
-name = "sync_middleware"
-harness = false
-
-[[bench]]
-name = "async_transform"
+name = "async_pipeline"
 harness = false
 required-features = ["async"]
 
 [[bench]]
-name = "async_middleware"
+name = "async_pipeline_transform"
 harness = false
 required-features = ["async"]
 
 [[example]]
-name = "basic_transform"
+name = "basic"
 path = "examples/basic.rs"
 
 [[example]]

@@ -23,10 +23,6 @@ pub mod types;
 /// Core pipe traits and continuation types.
 pub mod pipe;
 
-/// Internal helper functions used by pipeline implementations.
-#[doc(hidden)]
-pub mod utility;
-
 pub use crate::errors::*;
 pub use crate::pipe::*;
 pub use crate::pipeline::*;
