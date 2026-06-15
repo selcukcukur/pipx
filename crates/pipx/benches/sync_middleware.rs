@@ -3,12 +3,12 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
-use pipx::{Next, Pipe, PipeResult, PipeType, Pipeline};
+use pipx::{Next, Pipe, PipelineResult, PipeType, Pipeline};
 
 struct Add(u64);
 
 impl Pipe<u64> for Add {
-    fn handle(&self, passable: u64, next: Next<'_, u64>) -> PipeResult<u64> {
+    fn handle(&self, passable: u64, next: Next<'_, u64>) -> PipelineResult<u64> {
         next.handle(passable.wrapping_add(self.0))
     }
 }
@@ -16,7 +16,7 @@ impl Pipe<u64> for Add {
 struct WrapXor(u64);
 
 impl Pipe<u64> for WrapXor {
-    fn handle(&self, passable: u64, next: Next<'_, u64>) -> PipeResult<u64> {
+    fn handle(&self, passable: u64, next: Next<'_, u64>) -> PipelineResult<u64> {
         let value = next.handle(passable)?;
         Ok(value ^ self.0)
     }
@@ -25,7 +25,7 @@ impl Pipe<u64> for WrapXor {
 struct StopAfter(u64);
 
 impl Pipe<u64> for StopAfter {
-    fn handle(&self, passable: u64, _next: Next<'_, u64>) -> PipeResult<u64> {
+    fn handle(&self, passable: u64, _next: Next<'_, u64>) -> PipelineResult<u64> {
         Ok(passable + self.0)
     }
 }

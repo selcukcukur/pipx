@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
 use pipx::{
-    Next, Pipe, PipeResult, PipeType, Pipeline, TransformPipe, TransformPipeResult,
+    Next, Pipe, PipelineResult, PipeType, Pipeline, TransformPipe,
     TransformPipeType, TransformPipeline,
 };
 
@@ -25,7 +25,7 @@ impl Pipe<Vec<WorkItem>> for AttachTenant {
         &self,
         mut passable: Vec<WorkItem>,
         next: Next<'_, Vec<WorkItem>>,
-    ) -> PipeResult<Vec<WorkItem>> {
+    ) -> PipelineResult<Vec<WorkItem>> {
         for item in &mut passable {
             item.tenant = "tenant-a".to_string();
             item.audit_count += 1;
@@ -42,7 +42,7 @@ impl Pipe<Vec<WorkItem>> for AcceptBatch {
         &self,
         mut passable: Vec<WorkItem>,
         next: Next<'_, Vec<WorkItem>>,
-    ) -> PipeResult<Vec<WorkItem>> {
+    ) -> PipelineResult<Vec<WorkItem>> {
         for item in &mut passable {
             item.accepted = true;
             item.audit_count += 1;
@@ -55,7 +55,7 @@ impl Pipe<Vec<WorkItem>> for AcceptBatch {
 struct NormalizePayload;
 
 impl TransformPipe<Vec<WorkItem>> for NormalizePayload {
-    fn handle(&self, mut passable: Vec<WorkItem>) -> TransformPipeResult<Vec<WorkItem>> {
+    fn handle(&self, mut passable: Vec<WorkItem>) -> PipelineResult<Vec<WorkItem>> {
         for item in &mut passable {
             item.payload = item.payload.trim().to_ascii_uppercase();
             item.audit_count += 1;
@@ -68,7 +68,7 @@ impl TransformPipe<Vec<WorkItem>> for NormalizePayload {
 struct CalculateChecksum;
 
 impl TransformPipe<Vec<WorkItem>> for CalculateChecksum {
-    fn handle(&self, mut passable: Vec<WorkItem>) -> TransformPipeResult<Vec<WorkItem>> {
+    fn handle(&self, mut passable: Vec<WorkItem>) -> PipelineResult<Vec<WorkItem>> {
         for item in &mut passable {
             item.checksum = item.payload.bytes().fold(item.id as u64, |checksum, byte| {
                 checksum.wrapping_mul(31) + byte as u64

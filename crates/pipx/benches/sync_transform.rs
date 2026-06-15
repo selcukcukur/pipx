@@ -3,12 +3,12 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
-use pipx::{TransformPipe, TransformPipeResult, TransformPipeType, TransformPipeline};
+use pipx::{TransformPipe, PipelineResult, TransformPipeType, TransformPipeline};
 
 struct Add(u64);
 
 impl TransformPipe<Vec<u64>> for Add {
-    fn handle(&self, mut passable: Vec<u64>) -> TransformPipeResult<Vec<u64>> {
+    fn handle(&self, mut passable: Vec<u64>) -> PipelineResult<Vec<u64>> {
         for value in &mut passable {
             *value = value.wrapping_add(self.0);
         }
@@ -20,7 +20,7 @@ impl TransformPipe<Vec<u64>> for Add {
 struct Mix;
 
 impl TransformPipe<Vec<u64>> for Mix {
-    fn handle(&self, mut passable: Vec<u64>) -> TransformPipeResult<Vec<u64>> {
+    fn handle(&self, mut passable: Vec<u64>) -> PipelineResult<Vec<u64>> {
         for value in &mut passable {
             *value = value.rotate_left(7) ^ 0x9E37_79B9;
         }

@@ -6,7 +6,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
-use pipx::{AsyncNext, AsyncPipe, AsyncPipeType, AsyncPipeline, PipeResult};
+use pipx::{AsyncNext, AsyncPipe, AsyncPipeType, AsyncPipeline, PipelineResult};
 
 struct AsyncAdd(u64);
 
@@ -15,7 +15,7 @@ impl AsyncPipe<u64> for AsyncAdd {
         &'a self,
         passable: u64,
         next: AsyncNext<'a, u64>,
-    ) -> Pin<Box<dyn std::future::Future<Output = PipeResult<u64>> + Send + 'a>> {
+    ) -> Pin<Box<dyn std::future::Future<Output = PipelineResult<u64>> + Send + 'a>> {
         Box::pin(async move { next.handle(passable.wrapping_add(self.0)).await })
     }
 }
@@ -27,7 +27,7 @@ impl AsyncPipe<u64> for AsyncStop {
         &'a self,
         passable: u64,
         _next: AsyncNext<'a, u64>,
-    ) -> Pin<Box<dyn std::future::Future<Output = PipeResult<u64>> + Send + 'a>> {
+    ) -> Pin<Box<dyn std::future::Future<Output = PipelineResult<u64>> + Send + 'a>> {
         Box::pin(async move { Ok(passable + self.0) })
     }
 }

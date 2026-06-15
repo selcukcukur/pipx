@@ -7,7 +7,7 @@ use std::time::Duration;
 
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use pipx::{
-    AsyncTransformPipe, AsyncTransformPipeType, AsyncTransformPipeline, TransformPipeResult,
+    AsyncTransformPipe, AsyncTransformPipeType, AsyncTransformPipeline, PipelineResult,
 };
 
 struct AsyncAdd(u64);
@@ -16,7 +16,7 @@ impl AsyncTransformPipe<Vec<u64>> for AsyncAdd {
     fn handle<'a>(
         &'a self,
         mut passable: Vec<u64>,
-    ) -> Pin<Box<dyn std::future::Future<Output = TransformPipeResult<Vec<u64>>> + Send + 'a>> {
+    ) -> Pin<Box<dyn std::future::Future<Output = PipelineResult<Vec<u64>>> + Send + 'a>> {
         Box::pin(async move {
             for value in &mut passable {
                 *value = value.wrapping_add(self.0);
