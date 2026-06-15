@@ -15,7 +15,7 @@ impl MacroMiddleware {
 fn pipe_macro_implements_pipe_trait() {
     let result = Pipeline::new()
         .send("hello".to_string())
-        .when(true, std::sync::Arc::new(MacroMiddleware))
+        .when(true, MacroMiddleware)
         .then_return()
         .unwrap();
 

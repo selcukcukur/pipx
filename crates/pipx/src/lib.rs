@@ -2,6 +2,7 @@ pub mod errors;
 pub mod pipe;
 pub mod pipeline;
 pub mod types;
+pub mod macros;
 
 pub use crate::errors::*;
 pub use crate::pipe::*;

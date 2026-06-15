@@ -54,10 +54,10 @@ fn pipeline_can_short_circuit_the_chain() {
 fn pipeline_when_and_unless_append_conditionally() {
     let result = Pipeline::new()
         .send("core".to_string())
-        .when(true, Arc::new(Prefix("a:")))
-        .when(false, Arc::new(Prefix("b:")))
-        .unless(false, Arc::new(Prefix("c:")))
-        .unless(true, Arc::new(Prefix("d:")))
+        .when(true, Prefix("a:"))
+        .when(false, Prefix("b:"))
+        .unless(false, Prefix("c:"))
+        .unless(true, Prefix("d:"))
         .then_return()
         .unwrap();
 

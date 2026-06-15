@@ -62,39 +62,53 @@ impl<TPassable, TError> Pipeline<TPassable, TError> {
         self
     }
 
-    /// Adds a sequence of middleware pipes to the pipeline.
+    /// Sets the pipeline steps.
     ///
     /// **Parameters**
-    /// - `pipes` - Middleware pipes executed in the order they are provided.
+    /// - `pipes` - The steps that should define the pipeline execution chain.
     ///
     /// **Returns**
-    /// - The pipeline instance with the provided middleware appended.
+    /// - [`Pipeline`] - The pipeline instance with the provided steps set.
     pub fn through(mut self, pipes: Vec<PipelineStep<TPassable, TError>>) -> Self {
-        self.pipes.extend(pipes);
+        self.pipes = pipes;
         self
     }
 
-    /// Adds a middleware pipe when the condition is `true`.
+    /// Adds a pipeline step when the condition is `true`.
     ///
     /// **Parameters**
-    /// - `condition` - Controls whether the pipe is appended.
-    /// - `pipe` - The middleware pipe to append when the condition matches.
-    pub fn when(mut self, condition: bool, pipe: PipelineStep<TPassable, TError>) -> Self {
+    /// - `condition` - Determines whether the step should be appended.
+    /// - `pipe` - The step that should be executed as part of the pipeline.
+    ///
+    /// **Returns**
+    /// - [`Pipeline`] - The pipeline instance with the provided step conditionally appended.
+    pub fn when<P>(mut self, condition: bool, pipe: P) -> Self
+    where
+        P: Pipe<TPassable, TError> + Send + Sync + 'static,
+    {
         if condition {
-            self.pipes.push(pipe);
+            self.pipes.push(Arc::new(pipe));
         }
+
         self
     }
 
-    /// Adds the pipe when `condition` is `false`.
+    /// Adds a pipeline step when the condition is `false`.
     ///
     /// **Parameters**
-    /// - `condition` - Controls whether the pipe is skipped.
-    /// - `pipe` - The middleware pipe to append when the condition is false.
-    pub fn unless(mut self, condition: bool, pipe: PipelineStep<TPassable, TError>) -> Self {
+    /// - `condition` - Determines whether the step should be skipped.
+    /// - `pipe` - The step that should be executed as part of the pipeline.
+    ///
+    /// **Returns**
+    /// - [`Pipeline`] - The pipeline instance with the provided step conditionally appended.
+    pub fn unless<P>(mut self, condition: bool, pipe: P) -> Self
+    where
+        P: Pipe<TPassable, TError> + Send + Sync + 'static,
+    {
         if !condition {
-            self.pipes.push(pipe);
+            self.pipes.push(Arc::new(pipe));
         }
+
         self
     }
 
