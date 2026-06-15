@@ -1,5 +1,5 @@
 # This workflow validates formatting, metadata checks, clippy, and release builds.
-name: Rustpipe Linting
+name: pipx Linting
 
 # Run linting for every push, every pull request, and manual dispatches.
 on:
@@ -12,7 +12,7 @@ permissions:
 
 # Cancel older linting runs for the same branch to save runner time.
 concurrency:
-  group: rustpipe-linting-${{ github.ref }}
+  group: pipx-linting-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

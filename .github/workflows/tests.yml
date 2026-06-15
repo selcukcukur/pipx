@@ -1,5 +1,5 @@
-# This workflow runs Rustpipe's unit, integration, doctest, and coverage checks.
-name: Rustpipe Tests
+# This workflow runs pipx's unit, integration, doctest, and coverage checks.
+name: pipx Tests
 
 # Run tests for every push, every pull request, and manual dispatches.
 on:
@@ -12,7 +12,7 @@ permissions:
 
 # Cancel older test runs for the same branch to keep feedback current.
 concurrency:
-  group: rustpipe-tests-${{ github.ref }}
+  group: pipx-tests-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

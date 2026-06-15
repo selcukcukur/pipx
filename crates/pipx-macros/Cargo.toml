@@ -1,0 +1,16 @@
+[package]
+name = "pipx-macros"
+version = "0.1.0"
+edition = "2024"
+description = "Proc macros for pipx middleware and transform pipes."
+license = "MIT"
+repository = "https://github.com/selcukcukur/pipx"
+documentation = "https://docs.rs/pipx"
+
+[dependencies]
+syn = { version = "2.0.117", features = ["full"]}
+quote = "1"
+proc-macro2 = "1"
+
+[lib]
+proc-macro = true

@@ -1,5 +1,5 @@
-# This workflow checks that all Rustpipe benchmark targets compile.
-name: Rustpipe Benches
+# This workflow checks that all pipx benchmark targets compile.
+name: pipx Benches
 
 # Run benchmark checks for every push, every pull request, and manual dispatches.
 on:
@@ -12,7 +12,7 @@ permissions:
 
 # Cancel older benchmark checks for the same branch.
 concurrency:
-  group: rustpipe-benches-${{ github.ref }}
+  group: pipx-benches-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -53,4 +53,4 @@ jobs:
 
       # Compile every benchmark target with all features enabled.
       - name: Check benches
-        run: cargo check -p rustpipe --benches --all-features
+        run: cargo check -p pipx --benches --all-features

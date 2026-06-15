@@ -1,5 +1,5 @@
-# This workflow checks that all Rustpipe example targets compile.
-name: Rustpipe Examples
+# This workflow checks that all pipx example targets compile.
+name: pipx Examples
 
 # Run example checks for every push, every pull request, and manual dispatches.
 on:
@@ -12,7 +12,7 @@ permissions:
 
 # Cancel older example checks for the same branch.
 concurrency:
-  group: rustpipe-examples-${{ github.ref }}
+  group: pipx-examples-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -53,4 +53,4 @@ jobs:
 
       # Compile every example target with all features enabled.
       - name: Check examples
-        run: cargo check -p rustpipe --examples --all-features
+        run: cargo check -p pipx --examples --all-features
