@@ -1,25 +1,27 @@
 use std::sync::Arc;
 use crate::{FinallyCallback, Next, Pipe, PipelineError, PipelineResult, PipelineStep};
 
-/// A Laravel-inspired middleware pipeline.
+/// Composable pipeline executor.
 ///
-/// Each [`Pipe`](crate::Pipe) receives the current value and a [`Next`]
-/// continuation. Middleware can call `next.handle(passable)` to continue,
-/// return early to stop the chain, or wrap the downstream result.
+/// A pipeline stores an optional input value, an ordered list of steps,
+/// and an optional callback that runs after execution finishes.
+///
+/// Each [`Pipe`] receives the current value and a [`Next`] continuation.
+/// A step may continue the chain, stop execution early, wrap the downstream
+/// result, or return an error.
 ///
 /// **Generics**
-/// - `TPassable` - The type of the value that flows through the pipeline.
-/// - `TError` - The error type returned by middleware pipes.
+/// - `TPassable` - The value processed by the pipeline.
+/// - `TError` - The error type returned by pipeline steps.
 pub struct Pipeline<TPassable, TError = PipelineError> {
+    /// The value being passed through the pipeline.
     passable: Option<TPassable>,
-    pipes: Vec<PipelineStep<TPassable, TError>>,
-    finally: Option<FinallyCallback<TPassable>>,
-}
 
-impl<TPassable, TError> Default for Pipeline<TPassable, TError> {
-    fn default() -> Self {
-        Self::new()
-    }
+    /// The ordered steps that make up the pipeline.
+    pipes: Vec<PipelineStep<TPassable, TError>>,
+
+    /// The callback executed after the pipeline finishes.
+    finally: Option<FinallyCallback<TPassable>>,
 }
 
 impl<TPassable, TError> Pipeline<TPassable, TError> {
@@ -112,10 +114,13 @@ impl<TPassable, TError> Pipeline<TPassable, TError> {
         self
     }
 
-    /// Set a final callback to be executed after the pipeline ends regardless of the outcome.
+    /// Sets a final callback to be executed after the pipeline finishes.
     ///
     /// **Parameters**
     /// - `callback` - A closure that receives the final pipeline result.
+    ///
+    /// **Returns**
+    /// - [`Pipeline`] - The pipeline instance with the final callback registered.
     pub fn finally<F>(mut self, callback: F) -> Self
     where
         F: Fn(&PipelineResult<TPassable>) + Send + Sync + 'static,
@@ -129,14 +134,17 @@ impl<TPassable, TError> Pipeline<TPassable, TError>
 where
     TError: Into<PipelineError>,
 {
-    /// Run the pipeline with a final destination callback.
+    /// Executes the pipeline and applies a final transformation.
+    ///
+    /// Pipe errors are converted into [`PipelineError`] before the result is
+    /// returned to the caller.
     ///
     /// **Parameters**
-    /// - `destination` - A closure that maps the post-middleware value into `R`.
+    /// - `destination` - The callback used to transform the final pipeline value.
     ///
     /// **Returns**
-    /// - `Ok(R)` - The middleware chain completed and the destination ran.
-    /// - `Err(PipelineError)` - Input was missing or middleware failed.
+    /// - `Ok(R)` - The value returned by the destination callback after the pipeline has completed successfully.
+    /// - `Err(PipelineError)` - The pipeline execution could not be completed.
     pub fn then<F, R>(self, destination: F) -> PipelineResult<R>
     where
         F: FnOnce(TPassable) -> R,
@@ -144,23 +152,26 @@ where
         self.run(|passable| Ok(passable)).map(destination)
     }
 
-    /// Run the pipeline and return the result.
+    /// Executes the pipeline and returns the final value.
+    ///
+    /// Pipe errors are converted into [`PipelineError`] before the result is
+    /// returned to the caller.
     ///
     /// **Returns**
-    /// - `Ok(TPassable)` - The middleware chain completed successfully.
-    /// - `Err(PipelineError)` - Input was missing or middleware failed.
+    /// - `Ok(TPassable)` - The value produced after all pipeline steps have been executed successfully.
+    /// - `Err(PipelineError)` - The pipeline execution could not be completed.
     pub fn then_return(self) -> PipelineResult<TPassable> {
         self.run(|passable| Ok(passable))
     }
 
-    /// Intercepts middleware errors and allows recovery with a fallback value.
+    /// Recovers from pipeline errors using a fallback value.
     ///
     /// **Parameters**
-    /// - `recovery` - A closure that maps [`PipelineError`] into `TPassable`.
+    /// - `recovery` - The callback used to produce a fallback value from a [`PipelineError`].
     ///
     /// **Returns**
-    /// - `Ok(TPassable)` - The successful or recovered pipeline value.
-    /// - `Err(PipelineError)` - Input was missing before any recovery was possible.
+    /// - `Ok(TPassable)` - The value produced by the pipeline or the fallback value returned by the recovery callback.
+    /// - `Err(PipelineError)` - The pipeline was executed without an initial value.
     pub fn rescue<F>(self, recovery: F) -> PipelineResult<TPassable>
     where
         F: FnOnce(PipelineError) -> TPassable,
@@ -172,22 +183,46 @@ where
         }
     }
 
+    /// Executes the configured pipeline steps.
+    ///
+    /// **Parameters**
+    /// - `destination` - The final callback executed after all pipeline steps have completed.
+    ///
+    /// **Returns**
+    /// - `Ok(TPassable)` - The value produced after all pipeline steps and the destination callback have completed successfully.
+    /// - `Err(PipelineError)` - The pipeline execution could not be completed.
     fn run<F>(self, destination: F) -> PipelineResult<TPassable>
     where
         F: Fn(TPassable) -> PipelineResult<TPassable, TError>,
     {
+        // A pipeline must have an initial value before execution can start.
         let passable = self.passable.ok_or(PipelineError::InputMissing)?;
 
-        // Build the first continuation from the whole middleware slice. Every
-        // middleware receives a shorter slice through `Next`, so execution stays
-        // stack-safe for typical pipeline sizes without heap-building closures.
+        // `Next` represents the remaining execution chain.
+        //
+        // It receives the full step list at the beginning. Each call to `handle`
+        // creates a new `Next` with a shorter remaining slice, so every step only
+        // sees the part of the pipeline that comes after it.
         let next = Next::new(&self.pipes, &destination);
+
+        // Step errors use the concrete `TError` type internally.
+        //
+        // Public pipeline execution returns `PipelineError`, so the step error is
+        // normalized before leaving the pipeline boundary.
         let result = next.handle(passable).map_err(Into::into);
 
+        // The final callback always runs after execution completes, whether the
+        // pipeline completed successfully or returned an error.
         if let Some(finally) = &self.finally {
             finally(&result);
         }
 
         result
+    }
+}
+
+impl<TPassable, TError> Default for Pipeline<TPassable, TError> {
+    fn default() -> Self {
+        Self::new()
     }
 }
