@@ -1,47 +1,50 @@
-# Workspace configurations
+# Workspace settings
 [workspace]
-    # List of member crates included in this workspace
-    members = ["crates/pipx", "crates/pipx-macros"]
-    # Use the latest cargo resolver for dependency resolution
-    resolver = "3"
+# Crates included in this workspace
+members = ["crates/pipx", "crates/pipx-macros"]
+# Use the latest cargo resolver for dependency resolution
+resolver = "3"
 
+# Shared package settings
 [workspace.package]
-    # Rust edition (modern syntax and features)
-    edition = "2024"
-    # Keywords to improve discoverability on crates.io
-    keywords = ["pipeline", "pipe", "rust", "pipx"]
-    # Author information (name and email)
-    authors = ["Selçuk Çukur <hello@selcukcukur.me>"]
-    # License identifier (SPDX format, e.g. MIT, Apache-2.0)
-    license = "MIT"
-    # Current crate version (Semantic Versioning compliant)
-    version = "0.1.0"
+# Rust edition (modern syntax and features)
+edition = "2024"
+# Keywords to improve discoverability on crates.io
+keywords = ["pipeline", "pipe", "rust", "pipx"]
+# Author information
+authors = ["Selçuk Çukur <hello@selcukcukur.me>"]
+# License identifier (SPDX format)
+license = "MIT"
+# Current crate version (Semantic versioning)
+version = "0.1.0"
 
-    # Crates.io category (used for classification and discoverability)
-    categories = ["rust-patterns", "data-structures", "asynchronous", "value-formatting"]
-    # Repository URL (source code and issue tracker)
-    repository = "https://github.com/selcukcukur/pipx"
+# Documentation URL (reference published on docs.rs)
+documentation = "https://docs.rs/pipx"
+# Crates.io categories (used for classification and discoverability)
+categories = ["rust-patterns", "data-structures", "asynchronous", "value-formatting"]
+# Repository URL (source code and issue tracker)
+repository = "https://github.com/selcukcukur/pipx"
 
-# Dependency configurations
+# Shared dependencies
 [workspace.dependencies]
-    # serde - core framework for serialization and deserialization
-    serde = { version = "1", features = ["derive"] }
-    # serde_json - JSON backend for Serde, used for structured data and logging
-    serde_json = "1"
-    # thiserror - Lightweight error handling library for defining custom error types
-    thiserror = "2"
+# Core framework for serialization and deserialization
+serde = { version = "1", features = ["derive"] }
+# Json backend for serde, used for structured data and logging
+serde_json = "1"
+# Lightweight error handling library for custom error types
+thiserror = "2"
 
-# Debug configurations
+# Development profile
 [profile.dev]
-debug = true            # Enable debug symbols for better stack traces
-codegen-units = 256     # Faster compilation by using multiple codegen units
-lto = "off"             # No link-time optimization in debug mode (faster builds)
-panic = "unwind"        # Keep panic messages for debugging
-opt-level = 0           # Lower optimization level for quicker builds
+debug = true
+codegen-units = 256
+lto = "off"
+panic = "unwind"
+opt-level = 0
 
-# Release configurations
+# Release profile
 [profile.release]
-lto = "fat"             # Useful link-time optimization for maximum performance
-codegen-units = 1       # Single codegen unit for better optimization
-panic = "abort"         # Abort immediately on panic (smaller binary, faster fail)
-opt-level = 3           # Highest optimization level for runtime performance
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+opt-level = 3

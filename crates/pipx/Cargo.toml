@@ -1,20 +1,17 @@
 # Package configurations
 [package]
-    name = "pipx"
-    description = "Composable pipelines in Rust — define steps, chain transformations, and handle errors with elegance."
-    keywords.workspace = true
-    authors.workspace = true
-    license.workspace = true
-    version.workspace = true
-    edition.workspace = true
+name = "pipx"
+description = "Composable pipelines in Rust — define steps, chain transformations, and handle errors with elegance."
+keywords.workspace = true
+authors.workspace = true
+license.workspace = true
+version.workspace = true
+edition.workspace = true
 
-    categories.workspace = true
-    # Documentation URL (published API reference on docs.rs)
-    documentation = "https://docs.rs/pipx"
-    # Repository URL (source code and issue tracker)
-    repository.workspace = true
-    # Path to the readme file (displayed on crates.io)
-    readme = "readme.md"
+categories.workspace = true
+documentation.workspace = true
+repository.workspace = true
+readme = "readme.md"
 
 # Dependency configurations
 [dependencies]
