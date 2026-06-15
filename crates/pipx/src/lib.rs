@@ -7,11 +7,7 @@
 /// Centralized error definitions and handling utilities.
 pub mod errors;
 
-/// Laravel-inspired middleware pipeline implementation.
-pub mod middleware;
-
-/// Sequential transform pipeline implementation.
-pub mod transform;
+pub mod pipeline;
 
 /// Core trait and type definitions used across the crate.
 pub mod types;
@@ -20,8 +16,7 @@ pub mod types;
 pub mod utility;
 
 pub use crate::errors::*;
-pub use crate::middleware::*;
-pub use crate::transform::*;
+pub use crate::pipeline::*;
 pub use crate::types::*;
 
 #[cfg(feature = "macros")]

@@ -1,7 +1,7 @@
 #![cfg(feature = "macros")]
 
 use pipx::{
-    Next, PipeResult, Pipeline, TransformPipeResult, TransformPipeline, pipe, transform_pipe,
+    Next, PipeResult, Pipeline, TransformPipeResult, TransformPipeline, pipes, transform_pipe,
 };
 
 #[pipe(String, pipx::PipelineError)]
