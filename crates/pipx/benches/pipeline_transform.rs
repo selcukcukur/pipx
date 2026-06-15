@@ -2,7 +2,7 @@ use std::hint::black_box;
 use std::sync::Arc;
 use std::time::Duration;
 
-use criterion::{criterion_group, criterion_main, Criterion, Throughput};
+use criterion::{Criterion, Throughput, criterion_group, criterion_main};
 use pipx::{Next, Pipe, PipeType, Pipeline, PipelineResult};
 
 #[derive(Clone)]

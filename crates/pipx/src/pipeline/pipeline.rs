@@ -1,15 +1,4 @@
-use crate::errors::PipelineError;
-use crate::types::{
-    Finalizer,
-    PipeType,
-    PipelineResult
-};
-use crate::{Next};
-
-#[cfg(feature = "async")]
-use crate::{AsyncNext};
-#[cfg(feature = "async")]
-use crate::types::{AsyncPipeType};
+use crate::{FinallyCallback, Next, PipeType, PipelineError, PipelineResult};
 
 /// A Laravel-inspired middleware pipeline.
 ///
@@ -23,7 +12,7 @@ use crate::types::{AsyncPipeType};
 pub struct Pipeline<TPassable, TError = PipelineError> {
     passable: Option<TPassable>,
     pipes: Vec<PipeType<TPassable, TError>>,
-    finally: Option<Finalizer<TPassable>>
+    finally: Option<FinallyCallback<TPassable>>,
 }
 
 impl<TPassable, TError> Default for Pipeline<TPassable, TError> {
@@ -41,7 +30,7 @@ impl<TPassable, TError> Pipeline<TPassable, TError> {
         Self {
             passable: None,
             pipes: Vec::new(),
-            finally: None
+            finally: None,
         }
     }
 
@@ -93,7 +82,7 @@ impl<TPassable, TError> Pipeline<TPassable, TError> {
         self
     }
 
-    /// Registers a finalizer that runs after successful or failed execution.
+    /// Registers a FinallyCallback that runs after successful or failed execution.
     ///
     /// **Parameters**
     /// - `callback` - A closure that receives the final pipeline result.
@@ -147,9 +136,9 @@ where
         F: FnOnce(PipelineError) -> TPassable,
     {
         match self.then_return() {
-            Ok(passable) => Ok(passable),
-            Err(PipelineError::InputMissing) => Err(PipelineError::InputMissing),
-            Err(err) => Ok(recovery(err)),
+            | Ok(passable) => Ok(passable),
+            | Err(PipelineError::InputMissing) => Err(PipelineError::InputMissing),
+            | Err(err) => Ok(recovery(err)),
         }
     }
 
@@ -170,68 +159,5 @@ where
         }
 
         result
-    }
-}
-
-/// A Laravel-inspired asynchronous middleware pipeline.
-#[cfg(feature = "async")]
-pub struct AsyncPipeline<TPassable, TError = PipelineError> {
-    passable: Option<TPassable>,
-    pipes: Vec<AsyncPipeType<TPassable, TError>>,
-}
-
-#[cfg(feature = "async")]
-impl<TPassable, TError> Default for AsyncPipeline<TPassable, TError> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-#[cfg(feature = "async")]
-impl<TPassable, TError> AsyncPipeline<TPassable, TError> {
-    /// Creates a new asynchronous middleware pipeline.
-    pub fn new() -> Self {
-        Self {
-            passable: None,
-            pipes: Vec::new(),
-        }
-    }
-
-    /// Provides the initial passable value to the async middleware pipeline.
-    pub fn send(mut self, passable: TPassable) -> Self {
-        self.passable = Some(passable);
-        self
-    }
-
-    /// Adds asynchronous middleware pipes to the pipeline.
-    pub fn through(mut self, pipes: Vec<AsyncPipeType<TPassable, TError>>) -> Self {
-        self.pipes.extend(pipes);
-        self
-    }
-}
-
-#[cfg(feature = "async")]
-impl<TPassable, TError> AsyncPipeline<TPassable, TError>
-where
-    TPassable: Send,
-    TError: Into<PipelineError> + Send,
-{
-    /// Finalizes the asynchronous middleware pipeline and returns the processed output.
-    pub async fn then_return(self) -> PipelineResult<TPassable> {
-        let passable =  self.passable.ok_or(PipelineError::InputMissing)?;
-        let destination = |passable| {
-            Box::pin(async move { Ok(passable) })
-                as crate::types::AsyncPipeFuture<'_, TPassable, TError>
-        };
-        let next = AsyncNext::new(&self.pipes, &destination);
-        next.handle(passable).await.map_err(Into::into)
-    }
-
-    /// Executes async middleware and applies a final destination closure.
-    pub async fn then<F, R>(self, destination: F) -> PipelineResult<R>
-    where
-        F: FnOnce(TPassable) -> R,
-    {
-        self.then_return().await.map(destination)
     }
 }

@@ -3,12 +3,7 @@
 use std::pin::Pin;
 use std::sync::Arc;
 
-use pipx::{
-    AsyncNext,
-    AsyncPipe,
-    AsyncPipeline,
-    PipelineResult,
-};
+use pipx::{AsyncNext, AsyncPipe, AsyncPipeline, PipelineResult};
 
 struct AsyncPrefix(&'static str);
 
@@ -18,9 +13,7 @@ impl AsyncPipe<String> for AsyncPrefix {
         passable: String,
         next: AsyncNext<'a, String>,
     ) -> Pin<Box<dyn std::future::Future<Output = PipelineResult<String>> + Send + 'a>> {
-        Box::pin(async move {
-            next.handle(format!("{}{}", self.0, passable)).await
-        })
+        Box::pin(async move { next.handle(format!("{}{}", self.0, passable)).await })
     }
 }
 
@@ -32,9 +25,7 @@ impl AsyncPipe<String> for AsyncStop {
         passable: String,
         _next: AsyncNext<'a, String>,
     ) -> Pin<Box<dyn std::future::Future<Output = PipelineResult<String>> + Send + 'a>> {
-        Box::pin(async move {
-            Ok(format!("{passable}:stopped"))
-        })
+        Box::pin(async move { Ok(format!("{passable}:stopped")) })
     }
 }
 
@@ -46,9 +37,7 @@ impl AsyncPipe<String> for AsyncAddSuffix {
         passable: String,
         next: AsyncNext<'a, String>,
     ) -> Pin<Box<dyn std::future::Future<Output = PipelineResult<String>> + Send + 'a>> {
-        Box::pin(async move {
-            next.handle(format!("{}{}", passable, self.0)).await
-        })
+        Box::pin(async move { next.handle(format!("{}{}", passable, self.0)).await })
     }
 }
 
@@ -101,10 +90,7 @@ async fn async_pipeline_runs_multiple_steps_in_order() {
 async fn async_pipeline_can_short_circuit() {
     let result = AsyncPipeline::new()
         .send("core".to_string())
-        .through(vec![
-            Arc::new(AsyncStop),
-            Arc::new(AsyncPrefix("never:")),
-        ])
+        .through(vec![Arc::new(AsyncStop), Arc::new(AsyncPrefix("never:"))])
         .then_return()
         .await
         .unwrap();

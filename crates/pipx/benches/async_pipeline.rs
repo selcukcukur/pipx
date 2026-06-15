@@ -5,7 +5,7 @@ use std::pin::Pin;
 use std::sync::Arc;
 use std::time::Duration;
 
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use pipx::{AsyncNext, AsyncPipe, AsyncPipeType, AsyncPipeline, PipelineResult};
 
 struct AsyncAdd(u64);
@@ -16,9 +16,7 @@ impl AsyncPipe<u64> for AsyncAdd {
         passable: u64,
         next: AsyncNext<'a, u64>,
     ) -> Pin<Box<dyn std::future::Future<Output = PipelineResult<u64>> + Send + 'a>> {
-        Box::pin(async move {
-            next.handle(passable.wrapping_add(self.0)).await
-        })
+        Box::pin(async move { next.handle(passable.wrapping_add(self.0)).await })
     }
 }
 
@@ -30,9 +28,7 @@ impl AsyncPipe<u64> for AsyncStop {
         passable: u64,
         _next: AsyncNext<'a, u64>,
     ) -> Pin<Box<dyn std::future::Future<Output = PipelineResult<u64>> + Send + 'a>> {
-        Box::pin(async move {
-            Ok(passable + self.0)
-        })
+        Box::pin(async move { Ok(passable + self.0) })
     }
 }
 
@@ -83,8 +79,7 @@ fn bench_async_pipeline_short_circuit(c: &mut Criterion) {
     group.bench_function("stop_before_100_pipe_tail", |b| {
         b.iter(|| {
             runtime.block_on(async {
-                let mut stack: Vec<AsyncPipeType<u64>> =
-                    vec![Arc::new(AsyncStop(10))];
+                let mut stack: Vec<AsyncPipeType<u64>> = vec![Arc::new(AsyncStop(10))];
 
                 stack.extend(tail.clone());
 

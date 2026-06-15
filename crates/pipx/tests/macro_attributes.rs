@@ -1,22 +1,12 @@
 #![cfg(feature = "macros")]
 
-use pipx::{
-    pipe,
-    Next,
-    Pipeline,
-    PipelineError,
-    PipelineResult,
-};
+use pipx::{Next, Pipeline, PipelineError, PipelineResult, pipe};
 
 #[pipe(String, PipelineError)]
 struct MacroMiddleware;
 
 impl MacroMiddleware {
-    fn handle(
-        &self,
-        passable: String,
-        next: Next<'_, String>,
-    ) -> PipelineResult<String> {
+    fn handle(&self, passable: String, next: Next<'_, String>) -> PipelineResult<String> {
         next.handle(format!("macro:{passable}"))
     }
 }

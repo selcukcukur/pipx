@@ -1,11 +1,6 @@
 use std::sync::Arc;
 
-use pipx::{
-    Next,
-    Pipe,
-    Pipeline,
-    PipelineResult,
-};
+use pipx::{Next, Pipe, Pipeline, PipelineResult};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct Event {

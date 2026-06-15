@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use pipx::{Next, Pipe, PipelineResult, Pipeline, PipelineError, StepFailure};
+use pipx::{Next, Pipe, Pipeline, PipelineError, PipelineResult, StepFailure};
 
 #[derive(Debug)]
 struct Request {

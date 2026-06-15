@@ -61,7 +61,7 @@ fn expand_pipe(args: TokenStream, input: TokenStream, kind: PipeKind) -> TokenSt
     let error_ty = &args[1];
 
     let expanded = match kind {
-        PipeKind::Middleware => quote! {
+        | PipeKind::Middleware => quote! {
             #input_struct
 
             impl pipx::Pipe<#passable_ty, #error_ty> for #name {
@@ -74,7 +74,7 @@ fn expand_pipe(args: TokenStream, input: TokenStream, kind: PipeKind) -> TokenSt
                 }
             }
         },
-        PipeKind::Transform => quote! {
+        | PipeKind::Transform => quote! {
             #input_struct
 
             impl pipx::TransformPipe<#passable_ty, #error_ty> for #name {

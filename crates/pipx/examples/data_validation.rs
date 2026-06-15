@@ -12,11 +12,7 @@ struct Signup {
 struct NormalizeEmail;
 
 impl Pipe<Signup> for NormalizeEmail {
-    fn handle(
-        &self,
-        mut passable: Signup,
-        next: Next<'_, Signup>,
-    ) -> PipelineResult<Signup> {
+    fn handle(&self, mut passable: Signup, next: Next<'_, Signup>) -> PipelineResult<Signup> {
         passable.email = passable.email.trim().to_lowercase();
         passable.normalized = true;
 
@@ -27,11 +23,7 @@ impl Pipe<Signup> for NormalizeEmail {
 struct ValidateEmail;
 
 impl Pipe<Signup> for ValidateEmail {
-    fn handle(
-        &self,
-        passable: Signup,
-        next: Next<'_, Signup>,
-    ) -> PipelineResult<Signup> {
+    fn handle(&self, passable: Signup, next: Next<'_, Signup>) -> PipelineResult<Signup> {
         if passable.email.contains('@') {
             next.handle(passable)
         } else {
@@ -46,11 +38,7 @@ impl Pipe<Signup> for ValidateEmail {
 struct ValidatePassword;
 
 impl Pipe<Signup> for ValidatePassword {
-    fn handle(
-        &self,
-        passable: Signup,
-        next: Next<'_, Signup>,
-    ) -> PipelineResult<Signup> {
+    fn handle(&self, passable: Signup, next: Next<'_, Signup>) -> PipelineResult<Signup> {
         if passable.password.len() >= 12 {
             next.handle(passable)
         } else {

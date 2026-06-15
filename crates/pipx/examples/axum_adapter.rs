@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use pipx::{Next, Pipe, PipelineResult, Pipeline};
+use pipx::{Next, Pipe, Pipeline, PipelineResult};
 
 #[derive(Debug)]
 struct AxumLikeRequest {
