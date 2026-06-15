@@ -1,4 +1,5 @@
-use crate::{FinallyCallback, Next, PipelineError, PipelineResult, PipelineStep};
+use std::sync::Arc;
+use crate::{FinallyCallback, Next, Pipe, PipelineError, PipelineResult, PipelineStep};
 
 /// A Laravel-inspired middleware pipeline.
 ///
@@ -22,7 +23,10 @@ impl<TPassable, TError> Default for Pipeline<TPassable, TError> {
 }
 
 impl<TPassable, TError> Pipeline<TPassable, TError> {
-    /// Create a new empty pipeline.
+    /// Creates an empty pipeline.
+    ///
+    /// **Returns**
+    /// - [`Pipeline`] - A pipeline instance without an initial value or steps.
     pub fn new() -> Self {
         Self {
             passable: None,
@@ -31,15 +35,30 @@ impl<TPassable, TError> Pipeline<TPassable, TError> {
         }
     }
 
-    /// Provides the initial passable value to the middleware pipeline.
+    /// Provides the initial value to the pipeline.
     ///
     /// **Parameters**
-    /// - `passable` - The initial value that will flow through the middleware chain.
+    /// - `passable` - The value that should be processed by the pipeline.
     ///
     /// **Returns**
-    /// - The pipeline instance with the initial passable value set.
+    /// - [`Pipeline`] - The pipeline instance with the provided value set.
     pub fn send(mut self, passable: TPassable) -> Self {
         self.passable = Some(passable);
+        self
+    }
+
+    /// Adds a pipeline step to the execution chain.
+    ///
+    /// **Parameters**
+    /// - `pipe` - The step that should be executed as part of the pipeline.
+    ///
+    /// **Returns**
+    /// - [`Pipeline`] - The pipeline instance with the provided step appended.
+    pub fn pipe<TPipe>(mut self, pipe: TPipe) -> Self
+    where
+        TPipe: Pipe<TPassable, TError> + Send + Sync + 'static,
+    {
+        self.pipes.push(Arc::new(pipe));
         self
     }
 
