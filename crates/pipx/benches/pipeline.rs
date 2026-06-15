@@ -2,118 +2,85 @@ use std::hint::black_box;
 use std::sync::Arc;
 use std::time::Duration;
 
-use criterion::{Criterion, Throughput, criterion_group, criterion_main};
-use pipx::{
-    Next, Pipe, PipelineResult, PipeType, Pipeline, TransformPipe,
-    TransformPipeType, TransformPipeline,
-};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use pipx::{Next, Pipe, PipeType, Pipeline, PipelineResult};
 
-#[derive(Clone)]
-struct WorkItem {
-    id: usize,
-    tenant: String,
-    payload: String,
-    checksum: u64,
-    accepted: bool,
-    audit_count: u8,
-}
+struct Add(u64);
 
-struct AttachTenant;
-
-impl Pipe<Vec<WorkItem>> for AttachTenant {
-    fn handle(
-        &self,
-        mut passable: Vec<WorkItem>,
-        next: Next<'_, Vec<WorkItem>>,
-    ) -> PipelineResult<Vec<WorkItem>> {
-        for item in &mut passable {
-            item.tenant = "tenant-a".to_string();
-            item.audit_count += 1;
-        }
-
-        next.handle(passable)
+impl Pipe<u64> for Add {
+    fn handle(&self, passable: u64, next: Next<'_, u64>) -> PipelineResult<u64> {
+        next.handle(passable.wrapping_add(self.0))
     }
 }
 
-struct AcceptBatch;
+struct WrapXor(u64);
 
-impl Pipe<Vec<WorkItem>> for AcceptBatch {
-    fn handle(
-        &self,
-        mut passable: Vec<WorkItem>,
-        next: Next<'_, Vec<WorkItem>>,
-    ) -> PipelineResult<Vec<WorkItem>> {
-        for item in &mut passable {
-            item.accepted = true;
-            item.audit_count += 1;
-        }
-
-        next.handle(passable)
+impl Pipe<u64> for WrapXor {
+    fn handle(&self, passable: u64, next: Next<'_, u64>) -> PipelineResult<u64> {
+        let value = next.handle(passable)?;
+        Ok(value ^ self.0)
     }
 }
 
-struct NormalizePayload;
+struct StopAfter(u64);
 
-impl TransformPipe<Vec<WorkItem>> for NormalizePayload {
-    fn handle(&self, mut passable: Vec<WorkItem>) -> PipelineResult<Vec<WorkItem>> {
-        for item in &mut passable {
-            item.payload = item.payload.trim().to_ascii_uppercase();
-            item.audit_count += 1;
-        }
-
-        Ok(passable)
+impl Pipe<u64> for StopAfter {
+    fn handle(&self, passable: u64, _next: Next<'_, u64>) -> PipelineResult<u64> {
+        Ok(passable + self.0)
     }
 }
 
-struct CalculateChecksum;
-
-impl TransformPipe<Vec<WorkItem>> for CalculateChecksum {
-    fn handle(&self, mut passable: Vec<WorkItem>) -> PipelineResult<Vec<WorkItem>> {
-        for item in &mut passable {
-            item.checksum = item.payload.bytes().fold(item.id as u64, |checksum, byte| {
-                checksum.wrapping_mul(31) + byte as u64
-            });
-            item.audit_count += 1;
-        }
-
-        Ok(passable)
-    }
-}
-
-fn work_items(count: usize) -> Vec<WorkItem> {
+fn pipes(count: usize) -> Vec<PipeType<u64>> {
     (0..count)
-        .map(|id| WorkItem {
-            id,
-            tenant: String::new(),
-            payload: format!(" event-payload-{id} "),
-            checksum: 0,
-            accepted: false,
-            audit_count: 0,
+        .map(|index| {
+            if index % 2 == 0 {
+                Arc::new(Add(index as u64 + 1)) as PipeType<u64>
+            } else {
+                Arc::new(WrapXor(index as u64)) as PipeType<u64>
+            }
         })
         .collect()
 }
 
-fn bench_full_pipeline_stress(c: &mut Criterion) {
-    let mut group = c.benchmark_group("pipeline/full_stress");
-    let size = 1_000usize;
-    group.throughput(Throughput::Elements(size as u64));
+fn bench_sync_pipeline_by_pipe_count(c: &mut Criterion) {
+    let mut group = c.benchmark_group("sync_pipeline/pipe_count");
 
-    let middleware: Vec<PipeType<Vec<WorkItem>>> =
-        vec![Arc::new(AttachTenant), Arc::new(AcceptBatch)];
-    let transforms: Vec<TransformPipeType<Vec<WorkItem>>> =
-        vec![Arc::new(NormalizePayload), Arc::new(CalculateChecksum)];
+    for pipe_count in [1usize, 10, 100, 1_000] {
+        let stack = pipes(pipe_count);
+        group.throughput(Throughput::Elements(pipe_count as u64));
 
-    group.bench_function("1000_items_middleware_then_transform", |b| {
+        group.bench_with_input(
+            BenchmarkId::new("u64_value", pipe_count),
+            &stack,
+            |b, stack| {
+                b.iter(|| {
+                    let output = Pipeline::new()
+                        .send(black_box(0_u64))
+                        .through(stack.clone())
+                        .then_return()
+                        .unwrap();
+
+                    black_box(output);
+                });
+            },
+        );
+    }
+
+    group.finish();
+}
+
+fn bench_sync_pipeline_short_circuit(c: &mut Criterion) {
+    let mut group = c.benchmark_group("sync_pipeline/short_circuit");
+    let tail = pipes(1_000);
+
+    group.bench_function("stop_before_1000_pipe_tail", |b| {
         b.iter(|| {
-            let middleware_output = Pipeline::new()
-                .send(black_box(work_items(size)))
-                .through(middleware.clone())
-                .then_return()
-                .unwrap();
+            let mut stack: Vec<PipeType<u64>> = vec![Arc::new(StopAfter(10))];
+            stack.extend(tail.clone());
 
-            let output = TransformPipeline::new()
-                .send(middleware_output)
-                .through(transforms.clone())
+            let output = Pipeline::new()
+                .send(black_box(1_u64))
+                .through(stack)
                 .then_return()
                 .unwrap();
 
@@ -126,7 +93,7 @@ fn bench_full_pipeline_stress(c: &mut Criterion) {
 
 fn criterion_config() -> Criterion {
     Criterion::default()
-        .sample_size(20)
+        .sample_size(25)
         .warm_up_time(Duration::from_secs(2))
         .measurement_time(Duration::from_secs(8))
 }
@@ -134,7 +101,9 @@ fn criterion_config() -> Criterion {
 criterion_group! {
     name = benches;
     config = criterion_config();
-    targets = bench_full_pipeline_stress
+    targets =
+        bench_sync_pipeline_by_pipe_count,
+        bench_sync_pipeline_short_circuit
 }
 
 criterion_main!(benches);

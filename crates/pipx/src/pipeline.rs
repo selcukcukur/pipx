@@ -1,9 +1,13 @@
 use crate::errors::PipelineError;
-use crate::types::{Finalizer, Next, PipeType, PipelineResult};
-use crate::utility;
+use crate::types::{
+    Finalizer,
+    PipeType,
+    PipelineResult
+};
+use crate::{utility, AsyncNext, Next};
 
 #[cfg(feature = "async")]
-use crate::types::{AsyncNext, AsyncPipeType};
+use crate::types::{AsyncPipeType};
 
 /// A Laravel-inspired middleware pipeline.
 ///

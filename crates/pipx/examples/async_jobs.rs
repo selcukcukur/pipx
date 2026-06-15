@@ -3,7 +3,7 @@
 use std::pin::Pin;
 use std::sync::Arc;
 
-use pipx::{AsyncTransformPipe, AsyncTransformPipeline, PipelineResult};
+use pipx::{AsyncNext, AsyncPipe, AsyncPipeline, PipelineResult};
 
 #[derive(Debug)]
 struct Job {
@@ -14,29 +14,31 @@ struct Job {
 
 struct LoadFromQueue;
 
-impl AsyncTransformPipe<Job> for LoadFromQueue {
+impl AsyncPipe<Job> for LoadFromQueue {
     fn handle<'a>(
         &'a self,
         mut passable: Job,
+        next: AsyncNext<'a, Job>,
     ) -> Pin<Box<dyn std::future::Future<Output = PipelineResult<Job>> + Send + 'a>> {
         Box::pin(async move {
             passable.events.push("queue:loaded".to_string());
-            Ok(passable)
+            next.handle(passable).await
         })
     }
 }
 
 struct ExecuteJob;
 
-impl AsyncTransformPipe<Job> for ExecuteJob {
+impl AsyncPipe<Job> for ExecuteJob {
     fn handle<'a>(
         &'a self,
         mut passable: Job,
+        next: AsyncNext<'a, Job>,
     ) -> Pin<Box<dyn std::future::Future<Output = PipelineResult<Job>> + Send + 'a>> {
         Box::pin(async move {
             passable.attempts += 1;
             passable.events.push("job:executed".to_string());
-            Ok(passable)
+            next.handle(passable).await
         })
     }
 }
@@ -49,7 +51,7 @@ async fn main() -> pipx::PipelineResult<()> {
         events: Vec::new(),
     };
 
-    let job = AsyncTransformPipeline::new()
+    let job = AsyncPipeline::new()
         .send(job)
         .through(vec![Arc::new(LoadFromQueue), Arc::new(ExecuteJob)])
         .then_return()

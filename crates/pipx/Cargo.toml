@@ -64,7 +64,7 @@ required-features = ["async"]
 
 [[example]]
 name = "basic_transform"
-path = "examples/basic_transform.rs"
+path = "examples/basic.rs"
 
 [[example]]
 name = "middleware_auth"

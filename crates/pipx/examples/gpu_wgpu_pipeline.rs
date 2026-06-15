@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use pipx::{TransformPipe, PipelineResult, TransformPipeline};
+use pipx::{Next, Pipe, Pipeline, PipelineResult};
 
 #[derive(Debug)]
 struct RenderFrame {
@@ -11,31 +11,44 @@ struct RenderFrame {
 
 struct UploadBuffers;
 
-impl TransformPipe<RenderFrame> for UploadBuffers {
-    fn handle(&self, mut passable: RenderFrame) -> PipelineResult<RenderFrame> {
+impl Pipe<RenderFrame> for UploadBuffers {
+    fn handle(
+        &self,
+        mut passable: RenderFrame,
+        next: Next<'_, RenderFrame>,
+    ) -> PipelineResult<RenderFrame> {
         passable.command_log.push("wgpu:upload-buffers".to_string());
-        Ok(passable)
+        next.handle(passable)
     }
 }
 
 struct EncodeRenderPass;
 
-impl TransformPipe<RenderFrame> for EncodeRenderPass {
-    fn handle(&self, mut passable: RenderFrame) -> PipelineResult<RenderFrame> {
+impl Pipe<RenderFrame> for EncodeRenderPass {
+    fn handle(
+        &self,
+        mut passable: RenderFrame,
+        next: Next<'_, RenderFrame>,
+    ) -> PipelineResult<RenderFrame> {
         passable.command_log.push(format!(
             "wgpu:encode-render-pass vertices={}",
             passable.vertex_count
         ));
-        Ok(passable)
+
+        next.handle(passable)
     }
 }
 
 struct SubmitQueue;
 
-impl TransformPipe<RenderFrame> for SubmitQueue {
-    fn handle(&self, mut passable: RenderFrame) -> PipelineResult<RenderFrame> {
+impl Pipe<RenderFrame> for SubmitQueue {
+    fn handle(
+        &self,
+        mut passable: RenderFrame,
+        next: Next<'_, RenderFrame>,
+    ) -> PipelineResult<RenderFrame> {
         passable.command_log.push("wgpu:queue-submit".to_string());
-        Ok(passable)
+        next.handle(passable)
     }
 }
 
@@ -46,7 +59,7 @@ fn main() -> pipx::PipelineResult<()> {
         vertex_count: 36,
     };
 
-    let frame = TransformPipeline::new()
+    let frame = Pipeline::new()
         .send(frame)
         .through(vec![
             Arc::new(UploadBuffers),

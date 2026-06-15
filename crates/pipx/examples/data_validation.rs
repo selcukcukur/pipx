@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use pipx::{PipelineError, StepFailure, TransformPipe, PipelineResult, TransformPipeline};
+use pipx::{Next, Pipe, Pipeline, PipelineError, PipelineResult, StepFailure};
 
 #[derive(Debug)]
 struct Signup {
@@ -11,20 +11,29 @@ struct Signup {
 
 struct NormalizeEmail;
 
-impl TransformPipe<Signup> for NormalizeEmail {
-    fn handle(&self, mut passable: Signup) -> PipelineResult<Signup> {
+impl Pipe<Signup> for NormalizeEmail {
+    fn handle(
+        &self,
+        mut passable: Signup,
+        next: Next<'_, Signup>,
+    ) -> PipelineResult<Signup> {
         passable.email = passable.email.trim().to_lowercase();
         passable.normalized = true;
-        Ok(passable)
+
+        next.handle(passable)
     }
 }
 
 struct ValidateEmail;
 
-impl TransformPipe<Signup> for ValidateEmail {
-    fn handle(&self, passable: Signup) -> PipelineResult<Signup> {
+impl Pipe<Signup> for ValidateEmail {
+    fn handle(
+        &self,
+        passable: Signup,
+        next: Next<'_, Signup>,
+    ) -> PipelineResult<Signup> {
         if passable.email.contains('@') {
-            Ok(passable)
+            next.handle(passable)
         } else {
             Err(PipelineError::StepFailure(StepFailure {
                 step: "ValidateEmail",
@@ -36,10 +45,14 @@ impl TransformPipe<Signup> for ValidateEmail {
 
 struct ValidatePassword;
 
-impl TransformPipe<Signup> for ValidatePassword {
-    fn handle(&self, passable: Signup) -> PipelineResult<Signup> {
+impl Pipe<Signup> for ValidatePassword {
+    fn handle(
+        &self,
+        passable: Signup,
+        next: Next<'_, Signup>,
+    ) -> PipelineResult<Signup> {
         if passable.password.len() >= 12 {
-            Ok(passable)
+            next.handle(passable)
         } else {
             Err(PipelineError::StepFailure(StepFailure {
                 step: "ValidatePassword",
@@ -56,7 +69,7 @@ fn main() -> pipx::PipelineResult<()> {
         normalized: false,
     };
 
-    let signup = TransformPipeline::new()
+    let signup = Pipeline::new()
         .send(signup)
         .through(vec![
             Arc::new(NormalizeEmail),

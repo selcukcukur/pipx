@@ -2,14 +2,22 @@ use std::fmt;
 use std::sync::{Arc, Mutex};
 
 use pipx::{
-    Next, Pipe, PipelineResult, Pipeline, PipelineError, StepFailure, TransformPipe,
-    TransformPipeline,
+    Next,
+    Pipe,
+    Pipeline,
+    PipelineError,
+    PipelineResult,
+    StepFailure,
 };
 
 struct Prefix(&'static str);
 
 impl Pipe<String> for Prefix {
-    fn handle(&self, passable: String, next: Next<'_, String>) -> PipelineResult<String> {
+    fn handle(
+        &self,
+        passable: String,
+        next: Next<'_, String>,
+    ) -> PipelineResult<String> {
         next.handle(format!("{}{}", self.0, passable))
     }
 }
@@ -17,7 +25,11 @@ impl Pipe<String> for Prefix {
 struct Wrap(&'static str, &'static str);
 
 impl Pipe<String> for Wrap {
-    fn handle(&self, passable: String, next: Next<'_, String>) -> PipelineResult<String> {
+    fn handle(
+        &self,
+        passable: String,
+        next: Next<'_, String>,
+    ) -> PipelineResult<String> {
         let passable = next.handle(passable)?;
         Ok(format!("{}{}{}", self.0, passable, self.1))
     }
@@ -26,13 +38,17 @@ impl Pipe<String> for Wrap {
 struct Stop;
 
 impl Pipe<String> for Stop {
-    fn handle(&self, passable: String, _next: Next<'_, String>) -> PipelineResult<String> {
+    fn handle(
+        &self,
+        passable: String,
+        _next: Next<'_, String>,
+    ) -> PipelineResult<String> {
         Ok(format!("{passable}:stopped"))
     }
 }
 
 #[test]
-fn middleware_can_wrap_the_downstream_chain() {
+fn pipeline_can_wrap_the_downstream_chain() {
     let result = Pipeline::new()
         .send("core".to_string())
         .through(vec![Arc::new(Wrap("[", "]")), Arc::new(Prefix("app:"))])
@@ -43,7 +59,7 @@ fn middleware_can_wrap_the_downstream_chain() {
 }
 
 #[test]
-fn middleware_can_short_circuit_the_chain() {
+fn pipeline_can_short_circuit_the_chain() {
     let result = Pipeline::new()
         .send("core".to_string())
         .through(vec![Arc::new(Stop), Arc::new(Prefix("never:"))])
@@ -54,7 +70,7 @@ fn middleware_can_short_circuit_the_chain() {
 }
 
 #[test]
-fn middleware_when_and_unless_append_conditionally() {
+fn pipeline_when_and_unless_append_conditionally() {
     let result = Pipeline::new()
         .send("core".to_string())
         .when(true, Arc::new(Prefix("a:")))
@@ -68,7 +84,7 @@ fn middleware_when_and_unless_append_conditionally() {
 }
 
 #[test]
-fn middleware_runs_finally_on_success() {
+fn pipeline_runs_finally_on_success() {
     let seen = Arc::new(Mutex::new(None));
     let seen_for_callback = Arc::clone(&seen);
 
@@ -87,23 +103,31 @@ fn middleware_runs_finally_on_success() {
 
 struct Upper;
 
-impl TransformPipe<String> for Upper {
-    fn handle(&self, passable: String) -> PipelineResult<String> {
-        Ok(passable.to_uppercase())
+impl Pipe<String> for Upper {
+    fn handle(
+        &self,
+        passable: String,
+        next: Next<'_, String>,
+    ) -> PipelineResult<String> {
+        next.handle(passable.to_uppercase())
     }
 }
 
 struct Suffix(&'static str);
 
-impl TransformPipe<String> for Suffix {
-    fn handle(&self, passable: String) -> PipelineResult<String> {
-        Ok(format!("{}{}", passable, self.0))
+impl Pipe<String> for Suffix {
+    fn handle(
+        &self,
+        passable: String,
+        next: Next<'_, String>,
+    ) -> PipelineResult<String> {
+        next.handle(format!("{}{}", passable, self.0))
     }
 }
 
 #[test]
-fn transform_pipeline_runs_without_middleware_next() {
-    let result = TransformPipeline::new()
+fn pipeline_runs_sequential_value_steps() {
+    let result = Pipeline::new()
         .send("hello".to_string())
         .through(vec![Arc::new(Upper), Arc::new(Suffix("!"))])
         .then_return()
@@ -131,15 +155,19 @@ impl From<DomainError> for PipelineError {
 
 struct Fails;
 
-impl TransformPipe<String, DomainError> for Fails {
-    fn handle(&self, _passable: String) -> PipelineResult<String, DomainError> {
+impl Pipe<String, DomainError> for Fails {
+    fn handle(
+        &self,
+        _passable: String,
+        _next: Next<'_, String, DomainError>,
+    ) -> PipelineResult<String, DomainError> {
         Err(DomainError)
     }
 }
 
 #[test]
 fn custom_errors_can_escape_as_pipeline_errors() {
-    let result = TransformPipeline::new()
+    let result = Pipeline::new()
         .send("hello".to_string())
         .through(vec![Arc::new(Fails)])
         .then_return();
@@ -149,19 +177,23 @@ fn custom_errors_can_escape_as_pipeline_errors() {
 
 struct BuiltInFailure;
 
-impl TransformPipe<String> for BuiltInFailure {
-    fn handle(&self, _passable: String) -> PipelineResult<String> {
+impl Pipe<String> for BuiltInFailure {
+    fn handle(
+        &self,
+        _passable: String,
+        _next: Next<'_, String>,
+    ) -> PipelineResult<String> {
         Err(StepFailure {
             step: "BuiltInFailure",
             message: "failed".to_string(),
         }
-        .into())
+            .into())
     }
 }
 
 #[test]
 fn rescue_recovers_from_pipeline_errors() {
-    let result = TransformPipeline::new()
+    let result = Pipeline::new()
         .send("hello".to_string())
         .through(vec![Arc::new(BuiltInFailure)])
         .rescue(|_| "fallback".to_string())

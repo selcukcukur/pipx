@@ -1,7 +1,10 @@
 use std::sync::Arc;
 
 use pipx::{
-    Next, Pipe, PipelineResult, Pipeline, TransformPipe, TransformPipeline,
+    Next,
+    Pipe,
+    Pipeline,
+    PipelineResult,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -34,7 +37,11 @@ impl Pipe<Vec<Event>> for AttachTenant {
 struct RejectEmptyBatch;
 
 impl Pipe<Vec<Event>> for RejectEmptyBatch {
-    fn handle(&self, passable: Vec<Event>, next: Next<'_, Vec<Event>>) -> PipelineResult<Vec<Event>> {
+    fn handle(
+        &self,
+        passable: Vec<Event>,
+        next: Next<'_, Vec<Event>>,
+    ) -> PipelineResult<Vec<Event>> {
         if passable.is_empty() {
             Ok(passable)
         } else {
@@ -62,21 +69,29 @@ impl Pipe<Vec<Event>> for MarkAccepted {
 
 struct NormalizePayload;
 
-impl TransformPipe<Vec<Event>> for NormalizePayload {
-    fn handle(&self, mut passable: Vec<Event>) -> PipelineResult<Vec<Event>> {
+impl Pipe<Vec<Event>> for NormalizePayload {
+    fn handle(
+        &self,
+        mut passable: Vec<Event>,
+        next: Next<'_, Vec<Event>>,
+    ) -> PipelineResult<Vec<Event>> {
         for event in &mut passable {
             event.payload = event.payload.trim().to_ascii_uppercase();
             event.audit.push("normalized".to_string());
         }
 
-        Ok(passable)
+        next.handle(passable)
     }
 }
 
 struct BoostPriority;
 
-impl TransformPipe<Vec<Event>> for BoostPriority {
-    fn handle(&self, mut passable: Vec<Event>) -> PipelineResult<Vec<Event>> {
+impl Pipe<Vec<Event>> for BoostPriority {
+    fn handle(
+        &self,
+        mut passable: Vec<Event>,
+        next: Next<'_, Vec<Event>>,
+    ) -> PipelineResult<Vec<Event>> {
         for event in &mut passable {
             if event.id % 10 == 0 {
                 event.priority = event.priority.saturating_add(5);
@@ -84,7 +99,7 @@ impl TransformPipe<Vec<Event>> for BoostPriority {
             }
         }
 
-        Ok(passable)
+        next.handle(passable)
     }
 }
 
@@ -103,19 +118,15 @@ fn events(count: usize) -> Vec<Event> {
 
 #[test]
 fn full_pipeline_stress_processes_one_thousand_items() {
-    let middleware_output = Pipeline::new()
+    let output = Pipeline::new()
         .send(events(1_000))
         .through(vec![
             Arc::new(RejectEmptyBatch),
             Arc::new(AttachTenant("acme")),
             Arc::new(MarkAccepted),
+            Arc::new(NormalizePayload),
+            Arc::new(BoostPriority),
         ])
-        .then_return()
-        .unwrap();
-
-    let output = TransformPipeline::new()
-        .send(middleware_output)
-        .through(vec![Arc::new(NormalizePayload), Arc::new(BoostPriority)])
         .then_return()
         .unwrap();
 

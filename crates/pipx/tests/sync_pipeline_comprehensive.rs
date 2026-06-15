@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use pipx::{Next, Pipe, PipelineResult, Pipeline, PipelineError, StepFailure};
+use pipx::{Next, Pipe, Pipeline, PipelineError, PipelineResult, StepFailure};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct RequestContext {
@@ -92,7 +92,7 @@ impl Pipe<RequestContext> for MaintenanceMode {
 }
 
 #[test]
-fn middleware_wraps_downstream_response_in_lifo_order() {
+fn pipeline_wraps_downstream_response_in_lifo_order() {
     let result = Pipeline::new()
         .send(RequestContext::new("/dashboard"))
         .through(vec![
@@ -114,7 +114,7 @@ fn middleware_wraps_downstream_response_in_lifo_order() {
 }
 
 #[test]
-fn middleware_then_maps_final_context() {
+fn pipeline_then_maps_final_context() {
     let status = Pipeline::new()
         .send(RequestContext::new("/health"))
         .through(vec![Arc::new(Trace("trace"))])
@@ -125,7 +125,7 @@ fn middleware_then_maps_final_context() {
 }
 
 #[test]
-fn middleware_short_circuit_skips_later_pipes() {
+fn pipeline_short_circuit_skips_later_pipes() {
     let result = Pipeline::new()
         .send(RequestContext::new("/deploy"))
         .through(vec![
@@ -144,7 +144,7 @@ fn middleware_short_circuit_skips_later_pipes() {
 }
 
 #[test]
-fn middleware_errors_stop_the_chain_and_run_finally() {
+fn pipeline_errors_stop_the_chain_and_run_finally() {
     let called = Arc::new(Mutex::new(false));
     let called_in_finally = Arc::clone(&called);
     let mut request = RequestContext::new("/admin");
@@ -163,7 +163,7 @@ fn middleware_errors_stop_the_chain_and_run_finally() {
 }
 
 #[test]
-fn middleware_rescue_returns_fallback_context() {
+fn pipeline_rescue_returns_fallback_context() {
     let mut request = RequestContext::new("/admin");
     request.user_id = None;
 
