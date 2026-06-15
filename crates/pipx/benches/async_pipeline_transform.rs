@@ -6,7 +6,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
-use pipx::{AsyncNext, AsyncPipe, AsyncPipeType, AsyncPipeline, PipelineResult};
+use pipx::{AsyncNext, AsyncPipe, AsyncPipelineStep, AsyncPipeline, PipelineResult};
 
 struct AsyncAdd(u64);
 
@@ -30,9 +30,9 @@ fn values(count: usize) -> Vec<u64> {
     (0..count as u64).collect()
 }
 
-fn pipes(count: usize) -> Vec<AsyncPipeType<Vec<u64>>> {
+fn pipes(count: usize) -> Vec<AsyncPipelineStep<Vec<u64>>> {
     (0..count)
-        .map(|index| Arc::new(AsyncAdd(index as u64 + 1)) as AsyncPipeType<Vec<u64>>)
+        .map(|index| Arc::new(AsyncAdd(index as u64 + 1)) as AsyncPipelineStep<Vec<u64>>)
         .collect()
 }
 

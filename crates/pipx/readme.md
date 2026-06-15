@@ -155,7 +155,7 @@ Methods:
 
 * `Pipeline::new() -> Self` creates an empty pipeline.
 * `.send(passable) -> Self` sets the initial value.
-* `.through(Vec<PipeType<TPassable, TError>>) -> Self` appends middleware pipes in order.
+* `.through(Vec<PipelineStep<TPassable, TError>>) -> Self` appends middleware pipes in order.
 * `.when(condition, pipe) -> Self` appends `pipe` only when `condition` is `true`.
 * `.unless(condition, pipe) -> Self` appends `pipe` only when `condition` is `false`.
   execution; without it, the callback observes the current sent value immediately.
@@ -200,7 +200,7 @@ Methods:
 
 * `TransformPipeline::new() -> Self` creates an empty transform pipeline.
 * `.send(passable) -> Self` sets the initial value.
-* `.through(Vec<TransformPipeType<TPassable, TError>>) -> Self` appends transforms in order.
+* `.through(Vec<TransformPipelineStep<TPassable, TError>>) -> Self` appends transforms in order.
 * `.when(condition, pipe) -> Self` appends `pipe` only when `condition` is `true`.
 * `.unless(condition, pipe) -> Self` appends `pipe` only when `condition` is `false`.
 * `.finally(callback) -> Self` runs after success or failure and receives `&PipelineResult<T>`.
@@ -253,10 +253,10 @@ Async methods mirror the sync API where available:
 
 ### Shared Pipe Aliases
 
-* `PipeType<T, E = PipelineError> = Arc<dyn Pipe<T, E> + Send + Sync>`
-* `TransformPipeType<T, E = PipelineError> = Arc<dyn TransformPipe<T, E> + Send + Sync>`
-* `AsyncPipeType<T, E = PipelineError> = Arc<dyn AsyncPipe<T, E> + Send + Sync>`
-* `AsyncTransformPipeType<T, E = PipelineError> = Arc<dyn AsyncTransformPipe<T, E> + Send + Sync>`
+* `PipelineStep<T, E = PipelineError> = Arc<dyn Pipe<T, E> + Send + Sync>`
+* `TransformPipelineStep<T, E = PipelineError> = Arc<dyn TransformPipe<T, E> + Send + Sync>`
+* `AsyncPipelineStep<T, E = PipelineError> = Arc<dyn AsyncPipe<T, E> + Send + Sync>`
+* `AsyncTransformPipelineStep<T, E = PipelineError> = Arc<dyn AsyncTransformPipe<T, E> + Send + Sync>`
 
 ### Errors
 

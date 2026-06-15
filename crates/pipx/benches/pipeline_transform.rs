@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
-use pipx::{Next, Pipe, PipeType, Pipeline, PipelineResult};
+use pipx::{Next, Pipe, PipelineStep, Pipeline, PipelineResult};
 
 #[derive(Clone)]
 struct WorkItem {
@@ -104,7 +104,7 @@ fn bench_full_pipeline_stress(c: &mut Criterion) {
 
     group.throughput(Throughput::Elements(size as u64));
 
-    let pipes: Vec<PipeType<Vec<WorkItem>>> = vec![
+    let pipes: Vec<PipelineStep<Vec<WorkItem>>> = vec![
         Arc::new(AttachTenant),
         Arc::new(AcceptBatch),
         Arc::new(NormalizePayload),

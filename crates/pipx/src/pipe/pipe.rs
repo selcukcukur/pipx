@@ -1,5 +1,4 @@
-use crate::{PipeType, PipelineError, PipelineResult};
-use crate::pipe::Next;
+use crate::{Next, PipelineError, PipelineResult};
 
 /// A middleware pipe that can decide whether and when to call the next step.
 pub trait Pipe<TPassable, TError = PipelineError> {

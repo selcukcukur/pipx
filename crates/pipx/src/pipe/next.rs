@@ -1,4 +1,4 @@
-use crate::{PipeType, PipelineError, PipelineResult};
+use crate::{PipelineStep, PipelineError, PipelineResult};
 
 /// The continuation object passed to middleware pipes.
 ///
@@ -10,7 +10,7 @@ use crate::{PipeType, PipelineError, PipelineResult};
 /// - `TPassable` - The type of the value flowing through the middleware pipeline.
 /// - `TError` - The error type returned when any pipe fails.
 pub struct Next<'a, TPassable, TError = PipelineError> {
-    pipes: &'a [PipeType<TPassable, TError>],
+    pipes: &'a [PipelineStep<TPassable, TError>],
     destination: &'a dyn Fn(TPassable) -> PipelineResult<TPassable, TError>,
 }
 
@@ -24,7 +24,7 @@ impl<'a, TPassable, TError> Next<'a, TPassable, TError> {
     /// **Returns**
     /// - A `Next` value that can continue the middleware chain.
     pub(crate) fn new(
-        pipes: &'a [PipeType<TPassable, TError>],
+        pipes: &'a [PipelineStep<TPassable, TError>],
         destination: &'a dyn Fn(TPassable) -> PipelineResult<TPassable, TError>,
     ) -> Self {
         Self { pipes, destination }

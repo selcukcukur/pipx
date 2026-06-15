@@ -1,8 +1,8 @@
-use crate::{AsyncNext, AsyncPipeType, PipelineError, PipelineResult};
+use crate::{AsyncNext, AsyncPipelineStep, PipelineError, PipelineResult};
 
 pub struct AsyncPipeline<TPassable, TError = PipelineError> {
     passable: Option<TPassable>,
-    pipes: Vec<AsyncPipeType<TPassable, TError>>,
+    pipes: Vec<AsyncPipelineStep<TPassable, TError>>,
 }
 
 impl<TPassable, TError> Default for AsyncPipeline<TPassable, TError> {
@@ -27,7 +27,7 @@ impl<TPassable, TError> AsyncPipeline<TPassable, TError> {
     }
 
     /// Adds asynchronous middleware pipes to the pipeline.
-    pub fn through(mut self, pipes: Vec<AsyncPipeType<TPassable, TError>>) -> Self {
+    pub fn through(mut self, pipes: Vec<AsyncPipelineStep<TPassable, TError>>) -> Self {
         self.pipes.extend(pipes);
         self
     }

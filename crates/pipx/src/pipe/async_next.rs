@@ -1,9 +1,9 @@
+use crate::{AsyncDestination, AsyncPipelineStep, PipelineError, PipelineResult};
 use std::pin::Pin;
-use crate::{AsyncDestination, AsyncPipeType, PipelineError, PipelineResult};
 
 /// The asynchronous continuation object passed to async middleware pipes.
 pub struct AsyncNext<'a, TPassable, TError = PipelineError> {
-    pipes: &'a [AsyncPipeType<TPassable, TError>],
+    pipes: &'a [AsyncPipelineStep<TPassable, TError>],
     destination: &'a AsyncDestination<'a, TPassable, TError>,
 }
 
@@ -14,7 +14,7 @@ where
 {
     /// Creates an asynchronous continuation for the remaining middleware stack.
     pub(crate) fn new(
-        pipes: &'a [AsyncPipeType<TPassable, TError>],
+        pipes: &'a [AsyncPipelineStep<TPassable, TError>],
         destination: &'a AsyncDestination<'a, TPassable, TError>,
     ) -> Self {
         Self { pipes, destination }

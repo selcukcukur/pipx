@@ -1,5 +1,5 @@
-mod pipe;
 mod next;
+mod pipe;
 
 #[cfg(feature = "async")]
 mod async_pipe;
@@ -7,8 +7,8 @@ mod async_pipe;
 #[cfg(feature = "async")]
 mod async_next;
 
-pub use pipe::*;
 pub use next::*;
+pub use pipe::*;
 
 #[cfg(feature = "async")]
 pub use async_pipe::*;

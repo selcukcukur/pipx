@@ -1,4 +1,4 @@
-use crate::{FinallyCallback, Next, PipeType, PipelineError, PipelineResult};
+use crate::{FinallyCallback, Next, PipelineStep, PipelineError, PipelineResult};
 
 /// A Laravel-inspired middleware pipeline.
 ///
@@ -11,7 +11,7 @@ use crate::{FinallyCallback, Next, PipeType, PipelineError, PipelineResult};
 /// - `TError` - The error type returned by middleware pipes.
 pub struct Pipeline<TPassable, TError = PipelineError> {
     passable: Option<TPassable>,
-    pipes: Vec<PipeType<TPassable, TError>>,
+    pipes: Vec<PipelineStep<TPassable, TError>>,
     finally: Option<FinallyCallback<TPassable>>,
 }
 
@@ -22,10 +22,7 @@ impl<TPassable, TError> Default for Pipeline<TPassable, TError> {
 }
 
 impl<TPassable, TError> Pipeline<TPassable, TError> {
-    /// Creates a new, empty middleware pipeline instance.
-    ///
-    /// **Returns**
-    /// - A fresh middleware pipeline with no passable value and no pipes.
+    /// Create a new empty pipeline.
     pub fn new() -> Self {
         Self {
             passable: None,
@@ -53,7 +50,7 @@ impl<TPassable, TError> Pipeline<TPassable, TError> {
     ///
     /// **Returns**
     /// - The pipeline instance with the provided middleware appended.
-    pub fn through(mut self, pipes: Vec<PipeType<TPassable, TError>>) -> Self {
+    pub fn through(mut self, pipes: Vec<PipelineStep<TPassable, TError>>) -> Self {
         self.pipes.extend(pipes);
         self
     }
@@ -63,26 +60,26 @@ impl<TPassable, TError> Pipeline<TPassable, TError> {
     /// **Parameters**
     /// - `condition` - Controls whether the pipe is appended.
     /// - `pipe` - The middleware pipe to append when the condition matches.
-    pub fn when(mut self, condition: bool, pipe: PipeType<TPassable, TError>) -> Self {
+    pub fn when(mut self, condition: bool, pipe: PipelineStep<TPassable, TError>) -> Self {
         if condition {
             self.pipes.push(pipe);
         }
         self
     }
 
-    /// Adds a middleware pipe when the condition is `false`.
+    /// Adds the pipe when `condition` is `false`.
     ///
     /// **Parameters**
     /// - `condition` - Controls whether the pipe is skipped.
     /// - `pipe` - The middleware pipe to append when the condition is false.
-    pub fn unless(mut self, condition: bool, pipe: PipeType<TPassable, TError>) -> Self {
+    pub fn unless(mut self, condition: bool, pipe: PipelineStep<TPassable, TError>) -> Self {
         if !condition {
             self.pipes.push(pipe);
         }
         self
     }
 
-    /// Registers a FinallyCallback that runs after successful or failed execution.
+    /// Set a final callback to be executed after the pipeline ends regardless of the outcome.
     ///
     /// **Parameters**
     /// - `callback` - A closure that receives the final pipeline result.
@@ -99,7 +96,7 @@ impl<TPassable, TError> Pipeline<TPassable, TError>
 where
     TError: Into<PipelineError>,
 {
-    /// Executes the middleware chain and applies a final destination closure.
+    /// Run the pipeline with a final destination callback.
     ///
     /// **Parameters**
     /// - `destination` - A closure that maps the post-middleware value into `R`.
@@ -114,7 +111,7 @@ where
         self.run(|passable| Ok(passable)).map(destination)
     }
 
-    /// Finalizes the middleware pipeline and returns the processed output.
+    /// Run the pipeline and return the result.
     ///
     /// **Returns**
     /// - `Ok(TPassable)` - The middleware chain completed successfully.

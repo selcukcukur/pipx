@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
-use pipx::{Next, Pipe, PipeType, Pipeline, PipelineResult};
+use pipx::{Next, Pipe, PipelineStep, Pipeline, PipelineResult};
 
 struct Add(u64);
 
@@ -30,13 +30,13 @@ impl Pipe<u64> for StopAfter {
     }
 }
 
-fn pipes(count: usize) -> Vec<PipeType<u64>> {
+fn pipes(count: usize) -> Vec<PipelineStep<u64>> {
     (0..count)
         .map(|index| {
             if index % 2 == 0 {
-                Arc::new(Add(index as u64 + 1)) as PipeType<u64>
+                Arc::new(Add(index as u64 + 1)) as PipelineStep<u64>
             } else {
-                Arc::new(WrapXor(index as u64)) as PipeType<u64>
+                Arc::new(WrapXor(index as u64)) as PipelineStep<u64>
             }
         })
         .collect()
@@ -75,7 +75,7 @@ fn bench_sync_pipeline_short_circuit(c: &mut Criterion) {
 
     group.bench_function("stop_before_1000_pipe_tail", |b| {
         b.iter(|| {
-            let mut stack: Vec<PipeType<u64>> = vec![Arc::new(StopAfter(10))];
+            let mut stack: Vec<PipelineStep<u64>> = vec![Arc::new(StopAfter(10))];
             stack.extend(tail.clone());
 
             let output = Pipeline::new()
