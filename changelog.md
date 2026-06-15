@@ -1,24 +1,33 @@
 # Changelog
 
-## 0.1.0-alpha - 2026-06-09
+## Unreleased
 
-Initial draft release for **pipx** — built around the idea that every pipeline 
-should remain explicit, predictable, and easy to reason about.
+We’re excited to announce the very first release of pipx — now live on [crates.io](https://crates.io/crates/pipx)! 🎉
 
-### Added
-- Initialize pipx crate with basic pipe trait [[#7b27bd0]](https://github.com/selcukcukur/pipx/commit/7b27bd0766d5cb5895aa919d2972451c4fa0d91a)
-- Add pipeline struct with step chaining and execution [[#34ae672]](https://github.com/selcukcukur/pipx/commit/7b27bd0766d5cb5895aa919d2972451c4fa0d91a)
-- Add example pipeline with trim step and upper step  [[#1980e3e]](https://github.com/selcukcukur/pipx/commit/1980e3e84d6beaadf35e3af19609886fc4c5e92c)
-- Add result-based error handling to pipeline [[#bcd7baf]](https://github.com/selcukcukur/pipx/commit/bcd7bafa8c20f91a0675a190ffbfafedeaf64a72)
-- Add async pipeline with future-based steps [[#169d339]](https://github.com/selcukcukur/pipx/commit/169d33910f30b37a4642713c3cc8e9c583363375)
-- Add async pipeline with future-based steps [[#169d339]](https://github.com/selcukcukur/pipx/commit/169d33910f30b37a4642713c3cc8e9c583363375)
-- Add async pipeline example with delay step
+### Philosophy
 
-### Changed
-- Convert project to cargo workspace with pipx and examples [[#6c9f07f]](https://github.com/selcukcukur/pipx/commit/6c9f07f773d21fcd901b42344a25989254c5732a)
+pipx was built to make type‑safe pipelines in Rust simple yet powerful. The crate is 
+framework‑agnostic, designed to let developers compose clear data flows without losing 
+control over execution. It offers both middleware‑style and transform‑style pipelines, 
+so you can choose the model that best fits your problem domain.
 
-### Fixed
-- No changes made
+### Architecture
 
-### Removed
-- No changes made
+- Fully generic over passable values and error types.
+- Centralized error handling via `PipelineError`
+- Async support available behind the `async` feature
+- Workspace setup with shared dependencies and formatting rules
+- CI workflows for linting, tests, benches, examples, and publishing
+
+### Highlights
+
+- Type‑safe sync middleware pipelines (`Pipe`, `Next`, `Pipeline`)
+- Type‑safe sync transform pipelines (`TransformPipe`, `TransformPipeline`)
+- Async pipelines enabled via feature flag
+- Conditional composition with `when` and `unless`
+- Error recovery and finalization with `rescue` and `finally`
+- Optional observation hooks (`taps`)
+- Proc macros for boilerplate‑free pipe implementations (`#[pipe]`, `#[transform_pipe]`)
+- Benchmarks covering sync/async middleware and transforms
+- Runnable examples for web adapters (Axum, Actix), validation flows, async jobs, and GPU pipelines
+- Coverage reporting integrated with Codecov
