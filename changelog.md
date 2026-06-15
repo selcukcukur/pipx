@@ -26,7 +26,6 @@ so you can choose the model that best fits your problem domain.
 - Async pipelines enabled via feature flag
 - Conditional composition with `when` and `unless`
 - Error recovery and finalization with `rescue` and `finally`
-- Optional observation hooks (`taps`)
 - Proc macros for boilerplate‑free pipe implementations (`#[pipe]`, `#[transform_pipe]`)
 - Benchmarks covering sync/async middleware and transforms
 - Runnable examples for web adapters (Axum, Actix), validation flows, async jobs, and GPU pipelines

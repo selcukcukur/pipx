@@ -17,10 +17,7 @@ use crate::types::{AsyncNext, AsyncPipeType};
 pub struct Pipeline<TPassable, TError = PipelineError> {
     passable: Option<TPassable>,
     pipes: Vec<PipeType<TPassable, TError>>,
-    finally: Option<Finalizer<TPassable>>,
-
-    #[cfg(feature = "taps")]
-    taps: Vec<crate::types::Tap<TPassable>>,
+    finally: Option<Finalizer<TPassable>>
 }
 
 impl<TPassable, TError> Default for Pipeline<TPassable, TError> {
@@ -38,9 +35,7 @@ impl<TPassable, TError> Pipeline<TPassable, TError> {
         Self {
             passable: None,
             pipes: Vec::new(),
-            finally: None,
-            #[cfg(feature = "taps")]
-            taps: Vec::new(),
+            finally: None
         }
     }
 
@@ -103,28 +98,6 @@ impl<TPassable, TError> Pipeline<TPassable, TError> {
         self.finally = Some(Box::new(callback));
         self
     }
-
-    /// Registers an observer callback for the current value.
-    #[cfg(feature = "taps")]
-    pub fn tap<F>(mut self, callback: F) -> Self
-    where
-        F: Fn(&TPassable) + Send + Sync + 'static,
-    {
-        self.taps.push(Box::new(callback));
-        self
-    }
-
-    /// Registers an observer callback without storing it when `taps` is disabled.
-    #[cfg(not(feature = "taps"))]
-    pub fn tap<F>(self, callback: F) -> Self
-    where
-        F: Fn(&TPassable) + Send + Sync + 'static,
-    {
-        if let Some(passable) = &self.passable {
-            callback(passable);
-        }
-        self
-    }
 }
 
 impl<TPassable, TError> Pipeline<TPassable, TError>
@@ -179,12 +152,6 @@ where
         F: Fn(TPassable) -> PipeResult<TPassable, TError>,
     {
         let passable = utility::require_passable(self.passable)?;
-
-        #[cfg(feature = "taps")]
-        let destination = |passable: TPassable| {
-            utility::run_taps(&self.taps, &passable);
-            destination(passable)
-        };
 
         // Build the first continuation from the whole middleware slice. Every
         // middleware receives a shorter slice through `Next`, so execution stays

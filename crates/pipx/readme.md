@@ -33,7 +33,6 @@ as they can be converted into `PipelineError`.
 * Optional async middleware and transform pipelines behind the `async` feature
 * Conditional composition with `when` and `unless`
 * Recovery and finalization with `rescue` and `finally`
-* Optional observation hooks through the `taps` feature
 * Optional proc macros behind the `macros` feature
 * Centralized error handling through `PipelineError`
 * Criterion benchmarks split by sync, async, transform, middleware, and full pipeline scenarios
@@ -66,13 +65,6 @@ cargo add pipx --features async
 pipx = { version = "1", features = ["async"] }
 ```
 
-### Taps
-
-```toml
-[dependencies]
-pipx = { version = "1", features = ["taps"] }
-```
-
 ### Proc Macros
 
 ```toml
@@ -84,7 +76,7 @@ pipx = { version = "1", features = ["macros"] }
 
 ```toml
 [dependencies]
-pipx = { version = "1", features = ["async", "taps", "macros"] }
+pipx = { version = "1", features = ["async", "macros"] }
 ```
 
 ## Quickstart
@@ -166,7 +158,6 @@ Methods:
 * `.through(Vec<PipeType<TPassable, TError>>) -> Self` appends middleware pipes in order.
 * `.when(condition, pipe) -> Self` appends `pipe` only when `condition` is `true`.
 * `.unless(condition, pipe) -> Self` appends `pipe` only when `condition` is `false`.
-* `.tap(callback) -> Self` observes values. With `taps`, callbacks are stored and run during
   execution; without it, the callback observes the current sent value immediately.
 * `.finally(callback) -> Self` runs after success or failure and receives `&PipelineResult<T>`.
 * `.then(destination) -> PipelineResult<R>` executes the chain and maps the final value.
@@ -212,7 +203,6 @@ Methods:
 * `.through(Vec<TransformPipeType<TPassable, TError>>) -> Self` appends transforms in order.
 * `.when(condition, pipe) -> Self` appends `pipe` only when `condition` is `true`.
 * `.unless(condition, pipe) -> Self` appends `pipe` only when `condition` is `false`.
-* `.tap(callback) -> Self` observes values.
 * `.finally(callback) -> Self` runs after success or failure and receives `&PipelineResult<T>`.
 * `.then(destination) -> PipelineResult<R>` executes transforms and maps the final value.
 * `.then_return() -> PipelineResult<TPassable>` executes transforms and returns the final value.

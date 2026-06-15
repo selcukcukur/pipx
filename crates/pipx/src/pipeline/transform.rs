@@ -18,9 +18,6 @@ pub struct TransformPipeline<TPassable, TError = PipelineError> {
     passable: Option<TPassable>,
     pipes: Vec<TransformPipeType<TPassable, TError>>,
     finally: Option<Finalizer<TPassable>>,
-
-    #[cfg(feature = "taps")]
-    taps: Vec<crate::types::Tap<TPassable>>,
 }
 
 impl<TPassable, TError> Default for TransformPipeline<TPassable, TError> {
@@ -38,9 +35,7 @@ impl<TPassable, TError> TransformPipeline<TPassable, TError> {
         Self {
             passable: None,
             pipes: Vec::new(),
-            finally: None,
-            #[cfg(feature = "taps")]
-            taps: Vec::new(),
+            finally: None
         }
     }
 
@@ -103,31 +98,6 @@ impl<TPassable, TError> TransformPipeline<TPassable, TError> {
         self.finally = Some(Box::new(callback));
         self
     }
-
-    /// Registers an observer callback for successful transform stages.
-    ///
-    /// When the `taps` feature is disabled the callback observes only the
-    /// current value at registration time, matching a zero-storage core build.
-    #[cfg(feature = "taps")]
-    pub fn tap<F>(mut self, callback: F) -> Self
-    where
-        F: Fn(&TPassable) + Send + Sync + 'static,
-    {
-        self.taps.push(Box::new(callback));
-        self
-    }
-
-    /// Registers an observer callback without storing it when `taps` is disabled.
-    #[cfg(not(feature = "taps"))]
-    pub fn tap<F>(self, callback: F) -> Self
-    where
-        F: Fn(&TPassable) + Send + Sync + 'static,
-    {
-        if let Some(passable) = &self.passable {
-            callback(passable);
-        }
-        self
-    }
 }
 
 impl<TPassable, TError> TransformPipeline<TPassable, TError>
@@ -161,9 +131,6 @@ where
             match pipe.handle(passable) {
                 Ok(next) => {
                     passable = next;
-
-                    #[cfg(feature = "taps")]
-                    utility::run_taps(&self.taps, &passable);
                 }
                 Err(err) => {
                     let result = Err(err.into());

@@ -58,9 +58,6 @@ Arc<dyn TransformPipe<TPassable, TError> + Send + Sync>;
 /// Boxed finalizer callback used by pipeline implementations.
 pub type Finalizer<TPassable> = Box<dyn Fn(&PipelineResult<TPassable>) + Send + Sync>;
 
-/// Boxed tap callback used by the optional `taps` feature.
-pub type Tap<TPassable> = Box<dyn Fn(&TPassable) + Send + Sync>;
-
 /// The continuation object passed to middleware pipes.
 ///
 /// `Next` is inspired by Laravel's pipeline middleware flow. A middleware may call
