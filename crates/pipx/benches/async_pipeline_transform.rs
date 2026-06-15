@@ -6,7 +6,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
-use pipx::{AsyncNext, AsyncPipe, AsyncPipelineStep, AsyncPipeline, PipelineResult};
+use pipx::{AsyncNext, AsyncPipe, AsyncPipeline, AsyncPipelineStep, PipelineResult};
 
 struct AsyncAdd(u64);
 

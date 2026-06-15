@@ -1,4 +1,4 @@
-use crate::{PipelineStep, PipelineError, PipelineResult};
+use crate::{PipelineError, PipelineResult, PipelineStep};
 
 /// The continuation object passed to middleware pipes.
 ///

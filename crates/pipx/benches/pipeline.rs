@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
-use pipx::{Next, Pipe, PipelineStep, Pipeline, PipelineResult};
+use pipx::{Next, Pipe, Pipeline, PipelineResult, PipelineStep};
 
 struct Add(u64);
 

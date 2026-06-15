@@ -1,4 +1,4 @@
-use crate::{FinallyCallback, Next, PipelineStep, PipelineError, PipelineResult};
+use crate::{FinallyCallback, Next, PipelineError, PipelineResult, PipelineStep};
 
 /// A Laravel-inspired middleware pipeline.
 ///
