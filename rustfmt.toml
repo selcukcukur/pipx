@@ -1,7 +1,26 @@
+# Rust edition (defines language features and syntax available)
 edition = "2024"
+
+# Maximum line width before rustfmt wraps code
 max_width = 100
+
+# Style of newlines used in formatted code (Auto = platform default)
 newline_style = "Auto"
+
+# Automatically reorder imports for consistency
 reorder_imports = true
+
+# Automatically reorder modules for consistency
 reorder_modules = true
+
+# Use shorthand for struct field initialization (e.g. `Foo { bar }` instead of `Foo { bar: bar }`)
 use_field_init_shorthand = true
+
+# Use shorthand for try operator (`?`) instead of verbose error handling
 use_try_shorthand = true
+
+# (Recommended addition) Consistently format match arms for readability
+match_arm_leading_pipes = "Always"
+
+# (Recommended addition) Control how attributes are formatted
+normalize_doc_attributes = true
