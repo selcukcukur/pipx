@@ -1,23 +1,23 @@
 #![cfg(feature = "macros")]
 
 use pipx::{
-    Next, PipeResult, Pipeline, TransformPipeResult, TransformPipeline, pipes, transform_pipe,
+    Next, PipelineResult, PipelineError, Pipeline, TransformPipeline, pipe, transform_pipe,
 };
 
-#[pipe(String, pipx::PipelineError)]
+#[pipe(String, PipelineError)]
 struct MacroMiddleware;
 
 impl MacroMiddleware {
-    fn handle(&self, passable: String, next: Next<'_, String>) -> PipeResult<String> {
+    fn handle(&self, passable: String, next: Next<'_, String>) -> PipelineResult<String> {
         next.handle(format!("macro:{passable}"))
     }
 }
 
-#[transform_pipe(String, pipx::PipelineError)]
+#[transform_pipe(String, PipelineError)]
 struct MacroTransform;
 
 impl MacroTransform {
-    fn handle(&self, passable: String) -> TransformPipeResult<String> {
+    fn handle(&self, passable: String) -> PipelineResult<String> {
         Ok(passable.to_uppercase())
     }
 }

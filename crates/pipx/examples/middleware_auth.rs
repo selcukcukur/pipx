@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use pipx::{Next, Pipe, PipeResult, Pipeline, PipelineError, StepFailure};
+use pipx::{Next, Pipe, PipelineResult, Pipeline, PipelineError, StepFailure};
 
 #[derive(Debug)]
 struct Request {
@@ -12,7 +12,7 @@ struct Request {
 struct Authenticate;
 
 impl Pipe<Request> for Authenticate {
-    fn handle(&self, passable: Request, next: Next<'_, Request>) -> PipeResult<Request> {
+    fn handle(&self, passable: Request, next: Next<'_, Request>) -> PipelineResult<Request> {
         if passable.user_id.is_none() {
             Err(PipelineError::StepFailure(StepFailure {
                 step: "Authenticate",
@@ -27,7 +27,7 @@ impl Pipe<Request> for Authenticate {
 struct MarkHandled;
 
 impl Pipe<Request> for MarkHandled {
-    fn handle(&self, mut passable: Request, next: Next<'_, Request>) -> PipeResult<Request> {
+    fn handle(&self, mut passable: Request, next: Next<'_, Request>) -> PipelineResult<Request> {
         passable.status = 200;
         next.handle(passable)
     }

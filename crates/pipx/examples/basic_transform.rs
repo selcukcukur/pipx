@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
-use pipx::{TransformPipe, TransformPipeResult, TransformPipeline};
+use pipx::{TransformPipe, PipelineResult, TransformPipeline};
 
 struct Trim;
 
 impl TransformPipe<String> for Trim {
-    fn handle(&self, passable: String) -> TransformPipeResult<String> {
+    fn handle(&self, passable: String) -> PipelineResult<String> {
         Ok(passable.trim().to_string())
     }
 }
@@ -13,7 +13,7 @@ impl TransformPipe<String> for Trim {
 struct Slugify;
 
 impl TransformPipe<String> for Slugify {
-    fn handle(&self, passable: String) -> TransformPipeResult<String> {
+    fn handle(&self, passable: String) -> PipelineResult<String> {
         Ok(passable.to_lowercase().replace(' ', "-"))
     }
 }

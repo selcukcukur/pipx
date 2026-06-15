@@ -2,14 +2,14 @@ use std::fmt;
 use std::sync::{Arc, Mutex};
 
 use pipx::{
-    Next, Pipe, PipeResult, Pipeline, PipelineError, StepFailure, TransformPipe,
-    TransformPipeResult, TransformPipeline,
+    Next, Pipe, PipelineResult, Pipeline, PipelineError, StepFailure, TransformPipe,
+    TransformPipeline,
 };
 
 struct Prefix(&'static str);
 
 impl Pipe<String> for Prefix {
-    fn handle(&self, passable: String, next: Next<'_, String>) -> PipeResult<String> {
+    fn handle(&self, passable: String, next: Next<'_, String>) -> PipelineResult<String> {
         next.handle(format!("{}{}", self.0, passable))
     }
 }
@@ -17,7 +17,7 @@ impl Pipe<String> for Prefix {
 struct Wrap(&'static str, &'static str);
 
 impl Pipe<String> for Wrap {
-    fn handle(&self, passable: String, next: Next<'_, String>) -> PipeResult<String> {
+    fn handle(&self, passable: String, next: Next<'_, String>) -> PipelineResult<String> {
         let passable = next.handle(passable)?;
         Ok(format!("{}{}{}", self.0, passable, self.1))
     }
@@ -26,7 +26,7 @@ impl Pipe<String> for Wrap {
 struct Stop;
 
 impl Pipe<String> for Stop {
-    fn handle(&self, passable: String, _next: Next<'_, String>) -> PipeResult<String> {
+    fn handle(&self, passable: String, _next: Next<'_, String>) -> PipelineResult<String> {
         Ok(format!("{passable}:stopped"))
     }
 }
@@ -88,7 +88,7 @@ fn middleware_runs_finally_on_success() {
 struct Upper;
 
 impl TransformPipe<String> for Upper {
-    fn handle(&self, passable: String) -> TransformPipeResult<String> {
+    fn handle(&self, passable: String) -> PipelineResult<String> {
         Ok(passable.to_uppercase())
     }
 }
@@ -96,7 +96,7 @@ impl TransformPipe<String> for Upper {
 struct Suffix(&'static str);
 
 impl TransformPipe<String> for Suffix {
-    fn handle(&self, passable: String) -> TransformPipeResult<String> {
+    fn handle(&self, passable: String) -> PipelineResult<String> {
         Ok(format!("{}{}", passable, self.0))
     }
 }
@@ -132,7 +132,7 @@ impl From<DomainError> for PipelineError {
 struct Fails;
 
 impl TransformPipe<String, DomainError> for Fails {
-    fn handle(&self, _passable: String) -> TransformPipeResult<String, DomainError> {
+    fn handle(&self, _passable: String) -> PipelineResult<String, DomainError> {
         Err(DomainError)
     }
 }
@@ -150,7 +150,7 @@ fn custom_errors_can_escape_as_pipeline_errors() {
 struct BuiltInFailure;
 
 impl TransformPipe<String> for BuiltInFailure {
-    fn handle(&self, _passable: String) -> TransformPipeResult<String> {
+    fn handle(&self, _passable: String) -> PipelineResult<String> {
         Err(StepFailure {
             step: "BuiltInFailure",
             message: "failed".to_string(),

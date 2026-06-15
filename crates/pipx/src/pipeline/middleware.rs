@@ -1,5 +1,5 @@
 use crate::errors::PipelineError;
-use crate::types::{Finalizer, Next, PipeResult, PipeType, PipelineResult};
+use crate::types::{Finalizer, Next, PipeType, PipelineResult};
 use crate::utility;
 
 #[cfg(feature = "async")]
@@ -149,7 +149,7 @@ where
 
     fn run<F>(self, destination: F) -> PipelineResult<TPassable>
     where
-        F: Fn(TPassable) -> PipeResult<TPassable, TError>,
+        F: Fn(TPassable) -> PipelineResult<TPassable, TError>,
     {
         let passable = utility::require_passable(self.passable)?;
 

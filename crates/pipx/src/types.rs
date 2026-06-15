@@ -7,37 +7,14 @@ use std::future::Future;
 #[cfg(feature = "async")]
 use std::pin::Pin;
 
-/// Convenient alias for top-level pipeline operations.
+/// Result type used by pipelines and pipeline steps.
 ///
-/// **Generics**
-/// - `TPassable` - The successful output type produced by the pipeline.
+/// This alias is intentionally shared by both pipeline execution and individual
+/// pipe implementations. The first generic parameter is the successful output
+/// value, while the second generic parameter is the concrete error type.
 ///
-/// **Returns**
-/// - `Ok(TPassable)` - The pipeline completed successfully.
-/// - `Err(PipelineError)` - The pipeline failed with a centralized error.
-pub type PipelineResult<TPassable> = Result<TPassable, PipelineError>;
-
-/// Alias for pipe results.
-///
-/// **Generics**
-/// - `TPassable` - The successful output type produced by a pipe.
-/// - `TError` - The concrete error type returned by the pipe.
-///
-/// **Returns**
-/// - `Ok(TPassable)` - The pipe completed successfully.
-/// - `Err(TError)` - The pipe failed and stopped the chain.
-pub type PipeResult<TPassable, TError = PipelineError> = Result<TPassable, TError>;
-
-/// Alias for transform pipe results.
-///
-/// **Generics**
-/// - `TPassable` - The successful output type produced by a transform pipe.
-/// - `TError` - The concrete error type returned by the transform pipe.
-///
-/// **Returns**
-/// - `Ok(TPassable)` - The transform completed successfully.
-/// - `Err(TError)` - The transform failed and stopped the pipeline.
-pub type TransformPipeResult<TPassable, TError = PipelineError> = Result<TPassable, TError>;
+/// By default, public pipeline execution returns [`PipelineError`].
+pub type PipelineResult<TPassable, TError = PipelineError> = Result<TPassable, TError>;
 
 /// A thread-safe, shareable pipe unit.
 ///
@@ -69,7 +46,7 @@ pub type Finalizer<TPassable> = Box<dyn Fn(&PipelineResult<TPassable>) + Send + 
 /// - `TError` - The error type returned when any pipe fails.
 pub struct Next<'a, TPassable, TError = PipelineError> {
     pipes: &'a [PipeType<TPassable, TError>],
-    destination: &'a dyn Fn(TPassable) -> PipeResult<TPassable, TError>,
+    destination: &'a dyn Fn(TPassable) -> PipelineResult<TPassable, TError>,
 }
 
 impl<'a, TPassable, TError> Next<'a, TPassable, TError> {
@@ -83,7 +60,7 @@ impl<'a, TPassable, TError> Next<'a, TPassable, TError> {
     /// - A `Next` value that can continue the middleware chain.
     pub(crate) fn new(
         pipes: &'a [PipeType<TPassable, TError>],
-        destination: &'a dyn Fn(TPassable) -> PipeResult<TPassable, TError>,
+        destination: &'a dyn Fn(TPassable) -> PipelineResult<TPassable, TError>,
     ) -> Self {
         Self { pipes, destination }
     }
@@ -96,7 +73,7 @@ impl<'a, TPassable, TError> Next<'a, TPassable, TError> {
     /// **Returns**
     /// - `Ok(TPassable)` - The remaining chain completed successfully.
     /// - `Err(TError)` - A later middleware or destination failed.
-    pub fn handle(self, passable: TPassable) -> PipeResult<TPassable, TError> {
+    pub fn handle(self, passable: TPassable) -> PipelineResult<TPassable, TError> {
         if let Some((pipe, rest)) = self.pipes.split_first() {
             let next = Next::new(rest, self.destination);
             pipe.handle(passable, next)
@@ -125,7 +102,7 @@ pub trait Pipe<TPassable, TError = PipelineError> {
         &self,
         passable: TPassable,
         next: Next<'_, TPassable, TError>,
-    ) -> PipeResult<TPassable, TError>;
+    ) -> PipelineResult<TPassable, TError>;
 }
 
 /// A simple transform pipe that receives and returns the passable value.
@@ -142,7 +119,7 @@ pub trait TransformPipe<TPassable, TError = PipelineError> {
     /// **Returns**
     /// - `Ok(TPassable)` - The transformed value.
     /// - `Err(TError)` - The transform failed and stopped execution.
-    fn handle(&self, passable: TPassable) -> TransformPipeResult<TPassable, TError>;
+    fn handle(&self, passable: TPassable) -> PipelineResult<TPassable, TError>;
 }
 
 /// A thread-safe, shareable asynchronous middleware unit.
@@ -158,7 +135,7 @@ pub type AsyncTransformPipeType<TPassable, TError = PipelineError> =
 /// Boxed future returned by async pipe operations.
 #[cfg(feature = "async")]
 pub type AsyncPipeFuture<'a, TPassable, TError = PipelineError> =
-    Pin<Box<dyn Future<Output = PipeResult<TPassable, TError>> + Send + 'a>>;
+    Pin<Box<dyn Future<Output = PipelineResult<TPassable, TError>> + Send + 'a>>;
 
 /// Destination callback used by asynchronous middleware continuations.
 #[cfg(feature = "async")]
@@ -190,7 +167,7 @@ where
     pub fn handle(
         self,
         passable: TPassable,
-    ) -> Pin<Box<dyn Future<Output = PipeResult<TPassable, TError>> + Send + 'a>> {
+    ) -> Pin<Box<dyn Future<Output = PipelineResult<TPassable, TError>> + Send + 'a>> {
         Box::pin(async move {
             if let Some((pipe, rest)) = self.pipes.split_first() {
                 let next = AsyncNext::new(rest, self.destination);
@@ -210,7 +187,7 @@ pub trait AsyncPipe<TPassable, TError = PipelineError> {
         &'a self,
         passable: TPassable,
         next: AsyncNext<'a, TPassable, TError>,
-    ) -> Pin<Box<dyn Future<Output = PipeResult<TPassable, TError>> + Send + 'a>>;
+    ) -> Pin<Box<dyn Future<Output = PipelineResult<TPassable, TError>> + Send + 'a>>;
 }
 
 /// An asynchronous transform pipe that receives and returns the passable value.
@@ -220,5 +197,5 @@ pub trait AsyncTransformPipe<TPassable, TError = PipelineError> {
     fn handle<'a>(
         &'a self,
         passable: TPassable,
-    ) -> Pin<Box<dyn Future<Output = TransformPipeResult<TPassable, TError>> + Send + 'a>>;
+    ) -> Pin<Box<dyn Future<Output = PipelineResult<TPassable, TError>> + Send + 'a>>;
 }

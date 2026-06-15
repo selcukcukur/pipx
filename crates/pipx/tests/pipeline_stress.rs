@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use pipx::{
-    Next, Pipe, PipeResult, Pipeline, TransformPipe, TransformPipeResult, TransformPipeline,
+    Next, Pipe, PipelineResult, Pipeline, TransformPipe, TransformPipeline,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -21,7 +21,7 @@ impl Pipe<Vec<Event>> for AttachTenant {
         &self,
         mut passable: Vec<Event>,
         next: Next<'_, Vec<Event>>,
-    ) -> PipeResult<Vec<Event>> {
+    ) -> PipelineResult<Vec<Event>> {
         for event in &mut passable {
             event.tenant = self.0.to_string();
             event.audit.push("tenant".to_string());
@@ -34,7 +34,7 @@ impl Pipe<Vec<Event>> for AttachTenant {
 struct RejectEmptyBatch;
 
 impl Pipe<Vec<Event>> for RejectEmptyBatch {
-    fn handle(&self, passable: Vec<Event>, next: Next<'_, Vec<Event>>) -> PipeResult<Vec<Event>> {
+    fn handle(&self, passable: Vec<Event>, next: Next<'_, Vec<Event>>) -> PipelineResult<Vec<Event>> {
         if passable.is_empty() {
             Ok(passable)
         } else {
@@ -50,7 +50,7 @@ impl Pipe<Vec<Event>> for MarkAccepted {
         &self,
         mut passable: Vec<Event>,
         next: Next<'_, Vec<Event>>,
-    ) -> PipeResult<Vec<Event>> {
+    ) -> PipelineResult<Vec<Event>> {
         for event in &mut passable {
             event.accepted = true;
             event.audit.push("accepted".to_string());
@@ -63,7 +63,7 @@ impl Pipe<Vec<Event>> for MarkAccepted {
 struct NormalizePayload;
 
 impl TransformPipe<Vec<Event>> for NormalizePayload {
-    fn handle(&self, mut passable: Vec<Event>) -> TransformPipeResult<Vec<Event>> {
+    fn handle(&self, mut passable: Vec<Event>) -> PipelineResult<Vec<Event>> {
         for event in &mut passable {
             event.payload = event.payload.trim().to_ascii_uppercase();
             event.audit.push("normalized".to_string());
@@ -76,7 +76,7 @@ impl TransformPipe<Vec<Event>> for NormalizePayload {
 struct BoostPriority;
 
 impl TransformPipe<Vec<Event>> for BoostPriority {
-    fn handle(&self, mut passable: Vec<Event>) -> TransformPipeResult<Vec<Event>> {
+    fn handle(&self, mut passable: Vec<Event>) -> PipelineResult<Vec<Event>> {
         for event in &mut passable {
             if event.id % 10 == 0 {
                 event.priority = event.priority.saturating_add(5);

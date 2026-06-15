@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use pipx::{Next, Pipe, PipeResult, Pipeline};
+use pipx::{Next, Pipe, PipelineResult, Pipeline};
 
 #[derive(Debug)]
 struct ActixLikeServiceRequest {
@@ -15,7 +15,7 @@ impl Pipe<ActixLikeServiceRequest> for SessionLoader {
         &self,
         mut passable: ActixLikeServiceRequest,
         next: Next<'_, ActixLikeServiceRequest>,
-    ) -> PipeResult<ActixLikeServiceRequest> {
+    ) -> PipelineResult<ActixLikeServiceRequest> {
         passable.extensions.push("session:user-42".to_string());
         next.handle(passable)
     }
@@ -28,7 +28,7 @@ impl Pipe<ActixLikeServiceRequest> for CsrfGuard {
         &self,
         mut passable: ActixLikeServiceRequest,
         next: Next<'_, ActixLikeServiceRequest>,
-    ) -> PipeResult<ActixLikeServiceRequest> {
+    ) -> PipelineResult<ActixLikeServiceRequest> {
         passable.extensions.push("csrf:verified".to_string());
         next.handle(passable)
     }

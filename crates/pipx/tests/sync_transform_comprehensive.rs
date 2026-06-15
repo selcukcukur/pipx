@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use pipx::{
-    PipelineError, TransformPipe, TransformPipeResult, TransformPipeType, TransformPipeline,
+    PipelineError, TransformPipe, PipelineResult, TransformPipeType, TransformPipeline,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -16,7 +16,7 @@ struct Record {
 struct NormalizeName;
 
 impl TransformPipe<Vec<Record>> for NormalizeName {
-    fn handle(&self, mut records: Vec<Record>) -> TransformPipeResult<Vec<Record>> {
+    fn handle(&self, mut records: Vec<Record>) -> PipelineResult<Vec<Record>> {
         for record in &mut records {
             record.name = record.name.trim().to_lowercase();
         }
@@ -28,7 +28,7 @@ impl TransformPipe<Vec<Record>> for NormalizeName {
 struct AddTag(&'static str);
 
 impl TransformPipe<Vec<Record>> for AddTag {
-    fn handle(&self, mut records: Vec<Record>) -> TransformPipeResult<Vec<Record>> {
+    fn handle(&self, mut records: Vec<Record>) -> PipelineResult<Vec<Record>> {
         for record in &mut records {
             record.tags.push(self.0.to_string());
         }
@@ -40,7 +40,7 @@ impl TransformPipe<Vec<Record>> for AddTag {
 struct ScoreActiveUsers(i64);
 
 impl TransformPipe<Vec<Record>> for ScoreActiveUsers {
-    fn handle(&self, mut records: Vec<Record>) -> TransformPipeResult<Vec<Record>> {
+    fn handle(&self, mut records: Vec<Record>) -> PipelineResult<Vec<Record>> {
         for record in &mut records {
             if record.active {
                 record.score += self.0;
@@ -54,7 +54,7 @@ impl TransformPipe<Vec<Record>> for ScoreActiveUsers {
 struct RejectInactive;
 
 impl TransformPipe<Vec<Record>> for RejectInactive {
-    fn handle(&self, records: Vec<Record>) -> TransformPipeResult<Vec<Record>> {
+    fn handle(&self, records: Vec<Record>) -> PipelineResult<Vec<Record>> {
         if records.iter().any(|record| !record.active) {
             Err(PipelineError::StepFailure(pipx::StepFailure {
                 step: "RejectInactive",

@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use pipx::{Next, Pipe, PipeResult, Pipeline, PipelineError, StepFailure};
+use pipx::{Next, Pipe, PipelineResult, Pipeline, PipelineError, StepFailure};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct RequestContext {
@@ -30,7 +30,7 @@ impl Pipe<RequestContext> for Trace {
         &self,
         mut passable: RequestContext,
         next: Next<'_, RequestContext>,
-    ) -> PipeResult<RequestContext> {
+    ) -> PipelineResult<RequestContext> {
         passable.events.push(format!("{}:before", self.0));
 
         let mut response = next.handle(passable)?;
@@ -47,7 +47,7 @@ impl Pipe<RequestContext> for RequireUser {
         &self,
         passable: RequestContext,
         next: Next<'_, RequestContext>,
-    ) -> PipeResult<RequestContext> {
+    ) -> PipelineResult<RequestContext> {
         if passable.user_id.is_none() {
             Err(PipelineError::StepFailure(StepFailure {
                 step: "RequireUser",
@@ -66,7 +66,7 @@ impl Pipe<RequestContext> for AddHeader {
         &self,
         passable: RequestContext,
         next: Next<'_, RequestContext>,
-    ) -> PipeResult<RequestContext> {
+    ) -> PipelineResult<RequestContext> {
         let mut response = next.handle(passable)?;
         response
             .headers
@@ -82,7 +82,7 @@ impl Pipe<RequestContext> for MaintenanceMode {
         &self,
         mut passable: RequestContext,
         _next: Next<'_, RequestContext>,
-    ) -> PipeResult<RequestContext> {
+    ) -> PipelineResult<RequestContext> {
         passable.status = 503;
         passable
             .events

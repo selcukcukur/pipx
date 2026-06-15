@@ -69,7 +69,7 @@ fn expand_pipe(args: TokenStream, input: TokenStream, kind: PipeKind) -> TokenSt
                     &self,
                     passable: #passable_ty,
                     next: pipx::Next<'_, #passable_ty, #error_ty>,
-                ) -> pipx::PipeResult<#passable_ty, #error_ty> {
+                ) -> pipx::PipelineResult<#passable_ty, #error_ty> {
                     self.handle(passable, next)
                 }
             }
@@ -81,7 +81,7 @@ fn expand_pipe(args: TokenStream, input: TokenStream, kind: PipeKind) -> TokenSt
                 fn handle(
                     &self,
                     passable: #passable_ty,
-                ) -> pipx::TransformPipeResult<#passable_ty, #error_ty> {
+                ) -> pipx::PipelineResult<#passable_ty, #error_ty> {
                     self.handle(passable)
                 }
             }

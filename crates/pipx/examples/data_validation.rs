@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use pipx::{PipelineError, StepFailure, TransformPipe, TransformPipeResult, TransformPipeline};
+use pipx::{PipelineError, StepFailure, TransformPipe, PipelineResult, TransformPipeline};
 
 #[derive(Debug)]
 struct Signup {
@@ -12,7 +12,7 @@ struct Signup {
 struct NormalizeEmail;
 
 impl TransformPipe<Signup> for NormalizeEmail {
-    fn handle(&self, mut passable: Signup) -> TransformPipeResult<Signup> {
+    fn handle(&self, mut passable: Signup) -> PipelineResult<Signup> {
         passable.email = passable.email.trim().to_lowercase();
         passable.normalized = true;
         Ok(passable)
@@ -22,7 +22,7 @@ impl TransformPipe<Signup> for NormalizeEmail {
 struct ValidateEmail;
 
 impl TransformPipe<Signup> for ValidateEmail {
-    fn handle(&self, passable: Signup) -> TransformPipeResult<Signup> {
+    fn handle(&self, passable: Signup) -> PipelineResult<Signup> {
         if passable.email.contains('@') {
             Ok(passable)
         } else {
@@ -37,7 +37,7 @@ impl TransformPipe<Signup> for ValidateEmail {
 struct ValidatePassword;
 
 impl TransformPipe<Signup> for ValidatePassword {
-    fn handle(&self, passable: Signup) -> TransformPipeResult<Signup> {
+    fn handle(&self, passable: Signup) -> PipelineResult<Signup> {
         if passable.password.len() >= 12 {
             Ok(passable)
         } else {

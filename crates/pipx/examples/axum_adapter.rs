@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use pipx::{Next, Pipe, PipeResult, Pipeline};
+use pipx::{Next, Pipe, PipelineResult, Pipeline};
 
 #[derive(Debug)]
 struct AxumLikeRequest {
@@ -23,7 +23,7 @@ impl Pipe<AxumLikeRequest> for RequestLogger {
         &self,
         passable: AxumLikeRequest,
         next: Next<'_, AxumLikeRequest>,
-    ) -> PipeResult<AxumLikeRequest> {
+    ) -> PipelineResult<AxumLikeRequest> {
         println!("{} {}", passable.method, passable.path);
         next.handle(passable)
     }
@@ -36,7 +36,7 @@ impl Pipe<AxumLikeRequest> for AddRequestId {
         &self,
         mut passable: AxumLikeRequest,
         next: Next<'_, AxumLikeRequest>,
-    ) -> PipeResult<AxumLikeRequest> {
+    ) -> PipelineResult<AxumLikeRequest> {
         passable.headers.push(("x-request-id", "req-123"));
         next.handle(passable)
     }

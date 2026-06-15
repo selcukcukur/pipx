@@ -4,8 +4,12 @@ use std::pin::Pin;
 use std::sync::Arc;
 
 use pipx::{
-    AsyncNext, AsyncPipe, AsyncPipeline, AsyncTransformPipe, AsyncTransformPipeline, PipeResult,
-    TransformPipeResult,
+    AsyncNext, 
+    AsyncPipe, 
+    AsyncPipeline, 
+    AsyncTransformPipe, 
+    AsyncTransformPipeline,
+    PipelineResult,
 };
 
 struct AsyncPrefix(&'static str);
@@ -15,7 +19,7 @@ impl AsyncPipe<String> for AsyncPrefix {
         &'a self,
         passable: String,
         next: AsyncNext<'a, String>,
-    ) -> Pin<Box<dyn std::future::Future<Output = PipeResult<String>> + Send + 'a>> {
+    ) -> Pin<Box<dyn std::future::Future<Output = PipelineResult<String>> + Send + 'a>> {
         Box::pin(async move { next.handle(format!("{}{}", self.0, passable)).await })
     }
 }
@@ -27,7 +31,7 @@ impl AsyncPipe<String> for AsyncStop {
         &'a self,
         passable: String,
         _next: AsyncNext<'a, String>,
-    ) -> Pin<Box<dyn std::future::Future<Output = PipeResult<String>> + Send + 'a>> {
+    ) -> Pin<Box<dyn std::future::Future<Output = PipelineResult<String>> + Send + 'a>> {
         Box::pin(async move { Ok(format!("{passable}:stopped")) })
     }
 }
@@ -38,7 +42,7 @@ impl AsyncTransformPipe<String> for AsyncUpper {
     fn handle<'a>(
         &'a self,
         passable: String,
-    ) -> Pin<Box<dyn std::future::Future<Output = TransformPipeResult<String>> + Send + 'a>> {
+    ) -> Pin<Box<dyn std::future::Future<Output = PipelineResult<String>> + Send + 'a>> {
         Box::pin(async move { Ok(passable.to_uppercase()) })
     }
 }
@@ -49,7 +53,7 @@ impl AsyncTransformPipe<Vec<u64>> for AsyncBatchAdd {
     fn handle<'a>(
         &'a self,
         mut passable: Vec<u64>,
-    ) -> Pin<Box<dyn std::future::Future<Output = TransformPipeResult<Vec<u64>>> + Send + 'a>> {
+    ) -> Pin<Box<dyn std::future::Future<Output = PipelineResult<Vec<u64>>> + Send + 'a>> {
         Box::pin(async move {
             for value in &mut passable {
                 *value += self.0;

@@ -3,7 +3,7 @@
 use std::pin::Pin;
 use std::sync::Arc;
 
-use pipx::{AsyncTransformPipe, AsyncTransformPipeline, TransformPipeResult};
+use pipx::{AsyncTransformPipe, AsyncTransformPipeline, PipelineResult};
 
 #[derive(Debug)]
 struct Job {
@@ -18,7 +18,7 @@ impl AsyncTransformPipe<Job> for LoadFromQueue {
     fn handle<'a>(
         &'a self,
         mut passable: Job,
-    ) -> Pin<Box<dyn std::future::Future<Output = TransformPipeResult<Job>> + Send + 'a>> {
+    ) -> Pin<Box<dyn std::future::Future<Output = PipelineResult<Job>> + Send + 'a>> {
         Box::pin(async move {
             passable.events.push("queue:loaded".to_string());
             Ok(passable)
@@ -32,7 +32,7 @@ impl AsyncTransformPipe<Job> for ExecuteJob {
     fn handle<'a>(
         &'a self,
         mut passable: Job,
-    ) -> Pin<Box<dyn std::future::Future<Output = TransformPipeResult<Job>> + Send + 'a>> {
+    ) -> Pin<Box<dyn std::future::Future<Output = PipelineResult<Job>> + Send + 'a>> {
         Box::pin(async move {
             passable.attempts += 1;
             passable.events.push("job:executed".to_string());
