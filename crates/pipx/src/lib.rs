@@ -1,12 +1,28 @@
+/// Error types and utilities.
 pub mod errors;
+
+/// Declarative macros for pipeline construction.
 pub mod macros;
+
+/// Pipeline step traits and continuations.
 pub mod pipe;
+
+/// Pipeline implementations and helpers.
 pub mod pipeline;
+
+/// Shared pipeline type aliases.
 pub mod types;
 
+/// Re-export error types and utilities.
 pub use crate::errors::*;
+
+/// Re-export pipeline step traits and continuations.
 pub use crate::pipe::*;
+
+/// Re-export pipeline implementations and helpers.
 pub use crate::pipeline::*;
+
+/// Re-export shared pipeline type aliases.
 pub use crate::types::*;
 
 #[cfg(feature = "macros")]
