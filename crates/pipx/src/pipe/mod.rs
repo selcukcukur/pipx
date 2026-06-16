@@ -1,5 +1,5 @@
-mod pipe;
 mod next;
+mod pipe;
 
 #[cfg(feature = "async")]
 mod async_pipe;

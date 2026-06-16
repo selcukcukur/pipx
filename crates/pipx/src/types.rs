@@ -57,5 +57,4 @@ pub type AsyncPipelineFuture<'a, TPassable, TError = PipelineError> =
 pub type AsyncPipelineDestination<'a, TPassable, TError = PipelineError> =
     dyn Fn(TPassable) -> AsyncPipelineFuture<'a, TPassable, TError> + Sync + 'a;
 
-
 pub type FinallyCallback<TPassable> = Box<dyn Fn(&PipelineResult<TPassable>) + Send + Sync>;

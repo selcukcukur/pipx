@@ -1,6 +1,9 @@
 use std::sync::Arc;
 
-use crate::{AsyncNext, AsyncPipe, AsyncPipelineFuture, AsyncPipelineStep, FinallyCallback, PipelineError, PipelineResult};
+use crate::{
+    AsyncNext, AsyncPipe, AsyncPipelineFuture, AsyncPipelineStep, FinallyCallback, PipelineError,
+    PipelineResult,
+};
 
 /// Composable asynchronous pipeline executor.
 ///
@@ -147,7 +150,10 @@ where
     /// **Returns**
     /// - `Ok(TResult)` - The value returned by the destination callback after the pipeline has completed successfully.
     /// - `Err(PipelineError)` - The pipeline execution could not be completed.
-    pub async fn then<TDestination, TResult>(self, destination: TDestination) -> PipelineResult<TResult>
+    pub async fn then<TDestination, TResult>(
+        self,
+        destination: TDestination,
+    ) -> PipelineResult<TResult>
     where
         TDestination: FnOnce(TPassable) -> TResult,
     {
@@ -179,7 +185,7 @@ where
         TRecovery: FnOnce(PipelineError) -> TPassable,
     {
         match self.then_return().await {
-            Ok(passable) => Ok(passable),
+            | Ok(passable) => Ok(passable),
 
             // A pipeline cannot execute without an initial value.
             //
@@ -187,9 +193,9 @@ where
             // a failure that occurred while processing a value. Recovery callbacks
             // are only intended to handle execution failures, so this error is
             // returned unchanged to the caller.
-            Err(PipelineError::InputMissing) => Err(PipelineError::InputMissing),
+            | Err(PipelineError::InputMissing) => Err(PipelineError::InputMissing),
 
-            Err(err) => Ok(recovery(err)),
+            | Err(err) => Ok(recovery(err)),
         }
     }
 

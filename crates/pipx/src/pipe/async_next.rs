@@ -1,9 +1,4 @@
-use crate::{
-    AsyncPipelineDestination,
-    AsyncPipelineFuture,
-    AsyncPipelineStep,
-    PipelineError,
-};
+use crate::{AsyncPipelineDestination, AsyncPipelineFuture, AsyncPipelineStep, PipelineError};
 
 /// Asynchronous pipeline continuation.
 ///
