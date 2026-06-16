@@ -5,7 +5,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
-use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use pipx::{AsyncNext, AsyncPipe, AsyncPipeline, AsyncPipelineStep, PipelineResult};
 
 struct AsyncAdd(u64);
@@ -32,11 +32,13 @@ fn pipes(count: usize) -> Vec<AsyncPipelineStep<u64>> {
         .collect()
 }
 
+const PIPE_COUNTS: [usize; 4] = [1, 10, 100, 1_000];
+
 fn bench_async_pipeline_by_pipe_count(c: &mut Criterion) {
     let runtime = tokio::runtime::Runtime::new().unwrap();
     let mut group = c.benchmark_group("async_pipeline/pipe_count");
 
-    for pipe_count in [1usize, 10, 100] {
+    for pipe_count in PIPE_COUNTS {
         let stack = pipes(pipe_count);
 
         group.throughput(Throughput::Elements(pipe_count as u64));
@@ -44,8 +46,8 @@ fn bench_async_pipeline_by_pipe_count(c: &mut Criterion) {
         group.bench_with_input(
             BenchmarkId::new("u64_value", pipe_count),
             &stack,
-            |b, stack| {
-                b.iter(|| {
+            |bench, stack| {
+                bench.iter(|| {
                     runtime.block_on(async {
                         let output = AsyncPipeline::new()
                             .send(black_box(0_u64))
@@ -68,35 +70,44 @@ fn bench_async_pipeline_short_circuit(c: &mut Criterion) {
     let runtime = tokio::runtime::Runtime::new().unwrap();
     let mut group = c.benchmark_group("async_pipeline/short_circuit");
 
-    let tail = pipes(100);
+    for tail_count in [100usize, 1_000, 10_000, 100_000] {
+        let tail = pipes(tail_count);
 
-    group.bench_function("stop_before_100_pipe_tail", |b| {
-        b.iter(|| {
-            runtime.block_on(async {
-                let mut stack: Vec<AsyncPipelineStep<u64>> = vec![Arc::new(AsyncStop(10))];
+        group.throughput(Throughput::Elements(tail_count as u64));
 
-                stack.extend(tail.clone());
+        group.bench_with_input(
+            BenchmarkId::new("stop_before_tail", tail_count),
+            &tail,
+            |bench, tail| {
+                bench.iter(|| {
+                    runtime.block_on(async {
+                        let mut stack: Vec<AsyncPipelineStep<u64>> =
+                            vec![Arc::new(AsyncStop(10))];
 
-                let output = AsyncPipeline::new()
-                    .send(black_box(1_u64))
-                    .through(stack)
-                    .then_return()
-                    .await
-                    .unwrap();
+                        stack.extend(tail.clone());
 
-                black_box(output);
-            });
-        });
-    });
+                        let output = AsyncPipeline::new()
+                            .send(black_box(1_u64))
+                            .through(stack)
+                            .then_return()
+                            .await
+                            .unwrap();
+
+                        black_box(output);
+                    });
+                });
+            },
+        );
+    }
 
     group.finish();
 }
 
 fn criterion_config() -> Criterion {
     Criterion::default()
-        .sample_size(20)
-        .warm_up_time(Duration::from_secs(2))
-        .measurement_time(Duration::from_secs(8))
+        .sample_size(10)
+        .warm_up_time(Duration::from_secs(1))
+        .measurement_time(Duration::from_secs(5))
 }
 
 criterion_group! {

@@ -43,40 +43,66 @@ as they can be converted into `PipelineError`.
 
 ## Installation
 
+The **pipx** crate can be installed with the default feature set or with optional features depending on your use case.
+
 ### Default
 
+Use the default installation if you only need synchronous pipelines.
+
+#### Cargo
 ```bash
 cargo add pipx
 ```
 
+#### Manual
 ```toml
 [dependencies]
-pipx = "1"
+pipx = "0.1.0"
 ```
 
-### Async Pipelines
+### Async
 
+Enable the `async` feature if you want to use asynchronous pipelines.
+
+#### Cargo
 ```bash
 cargo add pipx --features async
 ```
 
+#### Manual
 ```toml
 [dependencies]
-pipx = { version = "1", features = ["async"] }
+pipx = { version = "0.1.0", features = ["async"] }
 ```
 
-### Proc Macros
+### Macros
 
+Enable the `macros` feature if you want to use procedural macros for pipe implementations.
+
+#### Cargo
+```bash
+cargo add pipx --features macros
+```
+
+#### Manual
 ```toml
 [dependencies]
-pipx = { version = "1", features = ["macros"] }
+pipx = { version = "0.1.0", features = ["macros"] }
 ```
 
 ### Everything
 
+Enable the `full` feature if you want to use all available pipx features.
+
+#### Cargo
+```bash
+cargo add pipx --features full
+```
+
+#### Manual
 ```toml
 [dependencies]
-pipx = { version = "1", features = ["async", "macros"] }
+pipx = { version = "0.1.0", features = ["full"] }
 ```
 
 ## Quickstart
