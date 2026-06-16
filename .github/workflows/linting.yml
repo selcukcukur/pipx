@@ -1,10 +1,17 @@
 # This workflow validates formatting, metadata checks, clippy, and release builds.
-name: pipx Linting
+name: linting
 
 # Run linting for every push, every pull request, and manual dispatches.
 on:
-  release:
-    types: [created]
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
 
 # Grant read-only repository access because this workflow only verifies code.
 permissions:

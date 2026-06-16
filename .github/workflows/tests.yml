@@ -1,10 +1,17 @@
 # This workflow runs pipx's unit, integration, doctest, and coverage checks.
-name: pipx Tests
+name: tests
 
 # Run tests for every push, every pull request, and manual dispatches.
 on:
-  release:
-    types: [created]
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
 
 # Grant read-only repository access because tests do not write repository content.
 permissions:

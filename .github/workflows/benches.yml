@@ -1,10 +1,9 @@
 # This workflow checks that all pipx benchmark targets compile.
-name: pipx Benches
+name: benches
 
 # Run benchmark checks for every push, every pull request, and manual dispatches.
 on:
-  release:
-    types: [created]
+  workflow_dispatch:
 
 # Grant read-only repository access because benchmark checks do not publish artifacts.
 permissions:

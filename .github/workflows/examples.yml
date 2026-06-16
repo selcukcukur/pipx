@@ -1,10 +1,17 @@
 # This workflow checks that all pipx example targets compile.
-name: pipx Examples
+name: examples
 
 # Run example checks for every push, every pull request, and manual dispatches.
 on:
-  release:
-    types: [created]
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
 
 # Grant read-only repository access because example checks do not publish artifacts.
 permissions:
