@@ -25,7 +25,7 @@ concurrency:
 jobs:
   # Compile example targets on Ubuntu to keep runner usage focused.
   examples:
-    name: Examples
+    name: pipx
     runs-on: ubuntu-latest
 
     steps:

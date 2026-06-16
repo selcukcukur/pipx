@@ -1,3 +1,12 @@
+![linting](https://github.com/selcukcukur/pipx/actions/workflows/linting.yml/badge.svg)
+![tests](https://github.com/selcukcukur/pipx/actions/workflows/tests.yml/badge.svg)
+![examples](https://github.com/selcukcukur/pipx/actions/workflows/examples.yml/badge.svg)
+![benches](https://github.com/selcukcukur/pipx/actions/workflows/benches.yml/badge.svg)
+[![coverage](https://codecov.io/gh/selcukcukur/pipx/graph/badge.svg)](https://codecov.io/gh/selcukcukur/pipx)
+[![crates.io](https://img.shields.io/crates/v/pipx.svg)](https://crates.io/crates/pipx)
+[![docs.rs](https://docs.rs/pipx/badge.svg)](https://docs.rs/pipx)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](license.md)
+
 > Built around the idea that every pipeline should remain explicit, predictable, and easy to reason about.
 
 ## Contributing

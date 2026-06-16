@@ -17,7 +17,7 @@ concurrency:
 jobs:
   # Compile benchmark targets on Ubuntu to keep runner usage focused.
   benches:
-    name: Benches
+    name: pipx
     runs-on: ubuntu-latest
 
     steps:

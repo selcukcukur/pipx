@@ -25,7 +25,7 @@ concurrency:
 jobs:
   # Run linting on Ubuntu to keep feedback fast and runner usage focused.
   lint:
-    name: Lint
+    name: pipx
     runs-on: ubuntu-latest
 
     steps:
