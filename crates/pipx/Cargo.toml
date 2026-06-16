@@ -1,99 +1,116 @@
-# Package configurations
+# Package configuration
 [package]
-name = "pipx"
-description = "Composable pipelines for Rust with synchronous and asynchronous execution, middleware-style processing, and predictable data flow."
-keywords.workspace = true
-authors.workspace = true
-license.workspace = true
-version.workspace = true
-edition.workspace = true
+    # Package identity
+    name = "pipx"
+    version.workspace = true
+    edition.workspace = true
 
-categories.workspace = true
-documentation.workspace = true
-repository.workspace = true
-readme = "readme.md"
+    # Package metadata
+    description = "Composable pipelines for Rust with synchronous and asynchronous execution, middleware-style processing, and predictable data flow."
+    keywords.workspace = true
+    categories.workspace = true
 
-# Dependency configurations
+    # Package authorship and licensing
+    authors.workspace = true
+    license.workspace = true
+
+    # Package resources
+    documentation.workspace = true
+    repository.workspace = true
+    readme = "readme.md"
+
+# Dependency configuration
 [dependencies]
-    # pipx-macros - Procedural macros crate for derive implementations and DSL support
+    # pipx-macros - Optional procedural macros for reducing pipeline boilerplate
     pipx-macros = { version = "0.1.0", path = "../pipx-macros", optional = true }
 
-    # serde - Core framework for serialization and deserialization
-    serde.workspace = true
-    # serde_json - JSON backend for Serde, used for structured data and logging
-    serde_json.workspace = true
-    #
+    # async-trait - Enables async trait methods for asynchronous pipeline support
     async-trait = { version = "0", optional = true }
-    # tokio - Asynchronous runtime for Rust (networking, tasks, timers, etc.)
-    tokio = { version ="1", features = ["full"], optional = true }
-    # thiserror - Lightweight error handling library for defining custom error types
+
+    # tokio - Runtime used by examples, tests, and asynchronous pipeline execution
+    tokio = { version = "1", features = ["full"], optional = true }
+
+    # thiserror - Derive-based error definitions used by pipeline error and related types
     thiserror.workspace = true
 
+# Development dependency configuration
 [dev-dependencies]
-criterion = "0.8.2"
+    # criterion - Statistical benchmarking framework for pipeline performance analysis
+    criterion = "0.8.2"
 
+# Feature configuration
 [features]
-default = []
-async = ["async-trait", "tokio"]
-macros = ["pipx-macros"]
-full = [
-    "async",
-    "macros",
-]
-
-
-[[bench]]
-name = "pipeline"
-harness = false
-
-[[bench]]
-name = "pipeline_transform"
-harness = false
-
-[[bench]]
-name = "async_pipeline"
-harness = false
-required-features = ["async"]
-
-[[bench]]
-name = "async_pipeline_transform"
-harness = false
-required-features = ["async"]
-
-[[example]]
-name = "basic"
-path = "examples/basic.rs"
-
-[[example]]
-name = "middleware_auth"
-path = "examples/middleware_auth.rs"
-
-[[example]]
-name = "axum_adapter"
-path = "examples/axum_adapter.rs"
-
-[[example]]
-name = "actix_web_adapter"
-path = "examples/actix_web_adapter.rs"
-
-[[example]]
-name = "data_validation"
-path = "examples/data_validation.rs"
-
-[[example]]
-name = "gpu_wgpu_pipeline"
-path = "examples/gpu_wgpu_pipeline.rs"
-
-[[example]]
-name = "async_jobs"
-path = "examples/async_jobs.rs"
-required-features = ["async"]
+    # default - Core synchronous pipeline functionality without optional features
+    default = []
+    # async - Enables asynchronous pipelines, async traits, and runtime support
+    async = ["async-trait", "tokio"]
+    # macros - Enables attribute macros for Pipe and AsyncPipe implementations
+    macros = ["pipx-macros"]
+    # full - Enables the complete pipx feature set
+    full = ["async", "macros"]
 
 # Library configuration
 [lib]
-    # The library name (as exposed to other crates)
+    # Library name exposed to dependent crates
     name = "pipx"
 
-    # Path to the library entry point (main source file)
+    # Path to the library entry point
     path = "src/lib.rs"
-    crate-type = ["rlib", "cdylib"]
+
+# Benchmarks for pipeline execution
+[[bench]]
+    name = "pipeline"
+    harness = false
+
+# Benchmarks for transform pipeline execution
+[[bench]]
+    name = "pipeline_transform"
+    harness = false
+
+# Benchmarks for asynchronous pipeline execution
+[[bench]]
+    name = "async_pipeline"
+    harness = false
+    required-features = ["async"]
+
+# Benchmarks for asynchronous transform pipeline execution
+[[bench]]
+    name = "async_pipeline_transform"
+    harness = false
+    required-features = ["async"]
+
+# Basic pipeline example
+[[example]]
+    name = "basic"
+    path = "examples/basic.rs"
+
+# Authentication pipeline example
+[[example]]
+    name = "middleware_auth"
+    path = "examples/middleware_auth.rs"
+
+# Axum integration example
+[[example]]
+    name = "axum_adapter"
+    path = "examples/axum_adapter.rs"
+
+# Actix Web integration example
+[[example]]
+    name = "actix_web_adapter"
+    path = "examples/actix_web_adapter.rs"
+
+# Data validation pipeline example
+[[example]]
+    name = "data_validation"
+    path = "examples/data_validation.rs"
+
+# GPU processing pipeline example
+[[example]]
+    name = "gpu_wgpu_pipeline"
+    path = "examples/gpu_wgpu_pipeline.rs"
+
+# Asynchronous job processing example
+[[example]]
+    name = "async_jobs"
+    path = "examples/async_jobs.rs"
+    required-features = ["async"]

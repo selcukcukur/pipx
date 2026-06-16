@@ -1,22 +1,36 @@
-# Package configurations
+# Package configuration
 [package]
-name = "pipx-macros"
-description = "Proc macros for pipx middleware and transform pipes."
-keywords.workspace = true
-authors.workspace = true
-license.workspace = true
-version.workspace = true
-edition.workspace = true
+    # Package identity
+    name = "pipx-macros"
+    version.workspace = true
+    edition.workspace = true
 
-categories.workspace = true
-documentation.workspace = true
-repository.workspace = true
-readme = "readme.md"
+    # Package metadata
+    description = "Procedural macros for reducing boilerplate when implementing pipelines with pipx."
+    keywords.workspace = true
+    categories.workspace = true
 
+    # Package authorship and licensing
+    authors.workspace = true
+    license.workspace = true
+
+    # Package resources
+    documentation.workspace = true
+    repository.workspace = true
+    readme = "readme.md"
+
+# Dependency configuration
 [dependencies]
-syn = { version = "2.0.117", features = ["full"]}
-quote = "1"
-proc-macro2 = "1"
+    # syn - Rust syntax tree parsing for procedural macro generation
+    syn = { version = "2.0.117", features = ["full"] }
 
+    # quote - Rust token generation for procedural macro expansion
+    quote = "1"
+
+# Library configuration
 [lib]
-proc-macro = true
+    # Library name exposed to dependent crates
+    name = "pipx_macros"
+
+    # Enables procedural macro generation for attribute and derive macros
+    proc-macro = true

@@ -5,7 +5,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use pipx::{AsyncNext, AsyncPipe, AsyncPipeline, AsyncPipelineStep, PipelineResult};
 
 struct AsyncAdd(u64);
@@ -81,8 +81,7 @@ fn bench_async_pipeline_short_circuit(c: &mut Criterion) {
             |bench, tail| {
                 bench.iter(|| {
                     runtime.block_on(async {
-                        let mut stack: Vec<AsyncPipelineStep<u64>> =
-                            vec![Arc::new(AsyncStop(10))];
+                        let mut stack: Vec<AsyncPipelineStep<u64>> = vec![Arc::new(AsyncStop(10))];
 
                         stack.extend(tail.clone());
 

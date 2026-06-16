@@ -389,8 +389,6 @@ dependencies = [
  "async-trait",
  "criterion",
  "pipx-macros",
- "serde",
- "serde_json",
  "thiserror",
  "tokio",
 ]
@@ -399,7 +397,6 @@ dependencies = [
 name = "pipx-macros"
 version = "0.1.0"
 dependencies = [
- "proc-macro2",
  "quote",
  "syn",
 ]

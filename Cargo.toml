@@ -10,7 +10,7 @@ resolver = "3"
 # Rust edition (modern syntax and features)
 edition = "2024"
 # Keywords to improve discoverability on crates.io
-keywords = ["pipeline", "pipe", "rust", "pipx"]
+keywords = ["pipeline", "pipe", "rust", "pipx", "macros"]
 # Author information
 authors = ["Selçuk Çukur <hello@selcukcukur.me>"]
 # License identifier (SPDX format)

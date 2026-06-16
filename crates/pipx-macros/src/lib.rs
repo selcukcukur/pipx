@@ -82,25 +82,20 @@ pub fn pipe(args: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// **Usage**
 /// ```ignore
-/// use pipx::{
-///     async_pipe,
-///     AsyncNext,
-///     AsyncPipelineFuture,
-///     PipelineResult,
-/// };
+/// use async_trait::async_trait;
+/// use pipx::{async_pipe, AsyncNext, PipelineResult};
 ///
 /// #[async_pipe(String)]
 /// struct Prefix;
 ///
+/// #[async_trait]
 /// impl Prefix {
-///     fn handle<'a>(
-///         &'a self,
+///     async fn handle(
+///         &self,
 ///         passable: String,
-///         next: AsyncNext<'a, String>,
-///     ) -> AsyncPipelineFuture<'a, String> {
-///         Box::pin(async move {
-///             next.handle(format!("[app] {passable}")).await
-///         })
+///         next: AsyncNext<'_, String>,
+///     ) -> PipelineResult<String> {
+///         next.handle(format!("[app] {passable}")).await
 ///     }
 /// }
 /// ```
@@ -132,13 +127,14 @@ pub fn async_pipe(args: TokenStream, input: TokenStream) -> TokenStream {
     let expanded = quote! {
         #input_struct
 
+        #[async_trait::async_trait]
         impl pipx::AsyncPipe<#passable_ty, #error_ty> for #name {
-            fn handle<'a>(
-                &'a self,
+            async fn handle(
+                &self,
                 passable: #passable_ty,
-                next: pipx::AsyncNext<'a, #passable_ty, #error_ty>,
-            ) -> pipx::AsyncPipelineFuture<'a, #passable_ty, #error_ty> {
-                self.handle(passable, next)
+                next: pipx::AsyncNext<'_, #passable_ty, #error_ty>,
+            ) -> pipx::PipelineResult<#passable_ty, #error_ty> {
+                self.handle(passable, next).await
             }
         }
     };
