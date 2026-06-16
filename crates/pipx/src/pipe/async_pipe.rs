@@ -1,4 +1,5 @@
-use crate::{AsyncNext, AsyncPipelineFuture, PipelineError};
+use crate::{AsyncNext, PipelineError, PipelineResult};
+use async_trait::async_trait;
 
 /// Defines an asynchronous pipeline step.
 ///
@@ -9,7 +10,12 @@ use crate::{AsyncNext, AsyncPipelineFuture, PipelineError};
 /// **Generics**
 /// - `TPassable` - The value processed by the pipeline.
 /// - `TError` - The error type returned by the pipe.
-pub trait AsyncPipe<TPassable, TError = PipelineError> {
+#[async_trait]
+pub trait AsyncPipe<TPassable, TError = PipelineError>
+where
+    TPassable: Send,
+    TError: Send,
+{
     /// Handles the current pipeline value asynchronously.
     ///
     /// **Parameters**
@@ -19,9 +25,9 @@ pub trait AsyncPipe<TPassable, TError = PipelineError> {
     /// **Returns**
     /// - `Ok(TPassable)` - The value produced by the pipe or the remaining asynchronous pipeline steps.
     /// - `Err(TError)` - The pipe failed and stopped pipeline execution.
-    fn handle<'a>(
-        &'a self,
+    async fn handle(
+        &self,
         passable: TPassable,
-        next: AsyncNext<'a, TPassable, TError>,
-    ) -> AsyncPipelineFuture<'a, TPassable, TError>;
+        next: AsyncNext<'_, TPassable, TError>,
+    ) -> PipelineResult<TPassable, TError>;
 }

@@ -1,34 +1,28 @@
 #![cfg(feature = "async")]
 
 use std::hint::black_box;
-use std::pin::Pin;
 use std::sync::Arc;
 use std::time::Duration;
 
+use async_trait::async_trait;
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use pipx::{AsyncNext, AsyncPipe, AsyncPipeline, AsyncPipelineStep, PipelineResult};
 
 struct AsyncAdd(u64);
 
+#[async_trait]
 impl AsyncPipe<u64> for AsyncAdd {
-    fn handle<'a>(
-        &'a self,
-        passable: u64,
-        next: AsyncNext<'a, u64>,
-    ) -> Pin<Box<dyn std::future::Future<Output = PipelineResult<u64>> + Send + 'a>> {
-        Box::pin(async move { next.handle(passable.wrapping_add(self.0)).await })
+    async fn handle(&self, passable: u64, next: AsyncNext<'_, u64>) -> PipelineResult<u64> {
+        next.handle(passable.wrapping_add(self.0)).await
     }
 }
 
 struct AsyncStop(u64);
 
+#[async_trait]
 impl AsyncPipe<u64> for AsyncStop {
-    fn handle<'a>(
-        &'a self,
-        passable: u64,
-        _next: AsyncNext<'a, u64>,
-    ) -> Pin<Box<dyn std::future::Future<Output = PipelineResult<u64>> + Send + 'a>> {
-        Box::pin(async move { Ok(passable + self.0) })
+    async fn handle(&self, passable: u64, _next: AsyncNext<'_, u64>) -> PipelineResult<u64> {
+        Ok(passable + self.0)
     }
 }
 

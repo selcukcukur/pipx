@@ -62,6 +62,8 @@ impl<TPassable, TError> AsyncPipeline<TPassable, TError> {
     /// - [`AsyncPipeline`] - The pipeline instance with the provided step appended.
     pub fn pipe<TPipe>(mut self, pipe: TPipe) -> Self
     where
+        TPassable: Send,
+        TError: Send,
         TPipe: AsyncPipe<TPassable, TError> + Send + Sync + 'static,
     {
         self.pipes.push(Arc::new(pipe));
@@ -90,6 +92,8 @@ impl<TPassable, TError> AsyncPipeline<TPassable, TError> {
     /// - [`AsyncPipeline`] - The pipeline instance with the provided step conditionally appended.
     pub fn when<TPipe>(mut self, condition: bool, pipe: TPipe) -> Self
     where
+        TPassable: Send,
+        TError: Send,
         TPipe: AsyncPipe<TPassable, TError> + Send + Sync + 'static,
     {
         if condition {
@@ -109,6 +113,8 @@ impl<TPassable, TError> AsyncPipeline<TPassable, TError> {
     /// - [`AsyncPipeline`] - The pipeline instance with the provided step conditionally appended.
     pub fn unless<TPipe>(mut self, condition: bool, pipe: TPipe) -> Self
     where
+        TPassable: Send,
+        TError: Send,
         TPipe: AsyncPipe<TPassable, TError> + Send + Sync + 'static,
     {
         if !condition {

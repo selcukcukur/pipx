@@ -1,9 +1,7 @@
 #![cfg(feature = "async")]
 
-use std::pin::Pin;
-use std::sync::Arc;
-
-use pipx::{AsyncNext, AsyncPipe, AsyncPipeline, PipelineResult};
+use async_trait::async_trait;
+use pipx::{AsyncNext, AsyncPipe, AsyncPipeline, async_steps};
 
 #[derive(Debug)]
 struct Job {
@@ -14,32 +12,32 @@ struct Job {
 
 struct LoadFromQueue;
 
+#[async_trait]
 impl AsyncPipe<Job> for LoadFromQueue {
-    fn handle<'a>(
-        &'a self,
+    async fn handle(
+        &self,
         mut passable: Job,
-        next: AsyncNext<'a, Job>,
-    ) -> Pin<Box<dyn std::future::Future<Output = PipelineResult<Job>> + Send + 'a>> {
-        Box::pin(async move {
-            passable.events.push("queue:loaded".to_string());
-            next.handle(passable).await
-        })
+        next: AsyncNext<'_, Job>,
+    ) -> pipx::PipelineResult<Job> {
+        passable.events.push("queue:loaded".to_string());
+
+        next.handle(passable).await
     }
 }
 
 struct ExecuteJob;
 
+#[async_trait]
 impl AsyncPipe<Job> for ExecuteJob {
-    fn handle<'a>(
-        &'a self,
+    async fn handle(
+        &self,
         mut passable: Job,
-        next: AsyncNext<'a, Job>,
-    ) -> Pin<Box<dyn std::future::Future<Output = PipelineResult<Job>> + Send + 'a>> {
-        Box::pin(async move {
-            passable.attempts += 1;
-            passable.events.push("job:executed".to_string());
-            next.handle(passable).await
-        })
+        next: AsyncNext<'_, Job>,
+    ) -> pipx::PipelineResult<Job> {
+        passable.attempts += 1;
+        passable.events.push("job:executed".to_string());
+
+        next.handle(passable).await
     }
 }
 
@@ -53,10 +51,11 @@ async fn main() -> pipx::PipelineResult<()> {
 
     let job = AsyncPipeline::new()
         .send(job)
-        .through(vec![Arc::new(LoadFromQueue), Arc::new(ExecuteJob)])
+        .through(async_steps![LoadFromQueue, ExecuteJob])
         .then_return()
         .await?;
 
     println!("job={} attempts={} {:?}", job.id, job.attempts, job.events);
+
     Ok(())
 }

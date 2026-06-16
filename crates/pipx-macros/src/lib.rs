@@ -41,8 +41,8 @@ pub fn pipe(args: TokenStream, input: TokenStream) -> TokenStream {
             &input_struct,
             "expected #[pipe(PassableType)] or #[pipe(PassableType, ErrorType)]",
         )
-            .to_compile_error()
-            .into();
+        .to_compile_error()
+        .into();
     }
 
     let passable_ty = &args[0];
@@ -63,6 +63,81 @@ pub fn pipe(args: TokenStream, input: TokenStream) -> TokenStream {
                 passable: #passable_ty,
                 next: pipx::Next<'_, #passable_ty, #error_ty>,
             ) -> pipx::PipelineResult<#passable_ty, #error_ty> {
+                self.handle(passable, next)
+            }
+        }
+    };
+
+    TokenStream::from(expanded)
+}
+
+/// Implements the [`AsyncPipe`] trait for a struct.
+///
+/// The macro expects a passable type and optionally an error type. When the
+/// error type is omitted, [`PipelineError`] is used by default.
+///
+/// **Parameters**
+/// - `PassableType` - The value type processed by the asynchronous pipe.
+/// - `ErrorType` - The error type returned by the asynchronous pipe.
+///
+/// **Usage**
+/// ```ignore
+/// use pipx::{
+///     async_pipe,
+///     AsyncNext,
+///     AsyncPipelineFuture,
+///     PipelineResult,
+/// };
+///
+/// #[async_pipe(String)]
+/// struct Prefix;
+///
+/// impl Prefix {
+///     fn handle<'a>(
+///         &'a self,
+///         passable: String,
+///         next: AsyncNext<'a, String>,
+///     ) -> AsyncPipelineFuture<'a, String> {
+///         Box::pin(async move {
+///             next.handle(format!("[app] {passable}")).await
+///         })
+///     }
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn async_pipe(args: TokenStream, input: TokenStream) -> TokenStream {
+    let input_struct = parse_macro_input!(input as ItemStruct);
+    let name = &input_struct.ident;
+
+    let args = parse_macro_input!(args with Punctuated::<Path, Token![,]>::parse_terminated);
+
+    if args.is_empty() || args.len() > 2 {
+        return syn::Error::new_spanned(
+            &input_struct,
+            "expected #[async_pipe(PassableType)] or #[async_pipe(PassableType, ErrorType)]",
+        )
+        .to_compile_error()
+        .into();
+    }
+
+    let passable_ty = &args[0];
+
+    let error_ty = if args.len() == 2 {
+        let error_ty = &args[1];
+        quote! { #error_ty }
+    } else {
+        quote! { pipx::PipelineError }
+    };
+
+    let expanded = quote! {
+        #input_struct
+
+        impl pipx::AsyncPipe<#passable_ty, #error_ty> for #name {
+            fn handle<'a>(
+                &'a self,
+                passable: #passable_ty,
+                next: pipx::AsyncNext<'a, #passable_ty, #error_ty>,
+            ) -> pipx::AsyncPipelineFuture<'a, #passable_ty, #error_ty> {
                 self.handle(passable, next)
             }
         }

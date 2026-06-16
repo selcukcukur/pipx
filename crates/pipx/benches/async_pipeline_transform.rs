@@ -1,28 +1,27 @@
 #![cfg(feature = "async")]
 
 use std::hint::black_box;
-use std::pin::Pin;
 use std::sync::Arc;
 use std::time::Duration;
 
+use async_trait::async_trait;
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use pipx::{AsyncNext, AsyncPipe, AsyncPipeline, AsyncPipelineStep, PipelineResult};
 
 struct AsyncAdd(u64);
 
+#[async_trait]
 impl AsyncPipe<Vec<u64>> for AsyncAdd {
-    fn handle<'a>(
-        &'a self,
+    async fn handle(
+        &self,
         mut passable: Vec<u64>,
-        next: AsyncNext<'a, Vec<u64>>,
-    ) -> Pin<Box<dyn std::future::Future<Output = PipelineResult<Vec<u64>>> + Send + 'a>> {
-        Box::pin(async move {
-            for value in &mut passable {
-                *value = value.wrapping_add(self.0);
-            }
+        next: AsyncNext<'_, Vec<u64>>,
+    ) -> PipelineResult<Vec<u64>> {
+        for value in &mut passable {
+            *value = value.wrapping_add(self.0);
+        }
 
-            next.handle(passable).await
-        })
+        next.handle(passable).await
     }
 }
 

@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use pipx::{Next, Pipe, Pipeline, PipelineResult, steps};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
