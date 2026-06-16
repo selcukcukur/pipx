@@ -1,51 +1,46 @@
-![pipx Linting](https://github.com/selcukcukur/pipx/actions/workflows/linting.yml/badge.svg)
-![pipx Tests](https://github.com/selcukcukur/pipx/actions/workflows/tests.yml/badge.svg)
-![pipx Benches](https://github.com/selcukcukur/pipx/actions/workflows/benches.yml/badge.svg)
-![pipx Examples](https://github.com/selcukcukur/pipx/actions/workflows/examples.yml/badge.svg)
-![pipx Publish](https://github.com/selcukcukur/pipx/actions/workflows/publish.yml/badge.svg)
-[![Coverage](https://codecov.io/gh/selcukcukur/pipx/branch/main/graph/badge.svg)](https://codecov.io/gh/selcukcukur/pipx)
-[![Crates.io](https://img.shields.io/crates/v/pipx.svg)](https://crates.io/crates/pipx)
-[![Docs.rs](https://docs.rs/pipx/badge.svg)](https://docs.rs/pipx)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](license.md)
-![Rust](https://img.shields.io/badge/rust-2024-orange.svg)
-![Rustfmt](https://img.shields.io/badge/code%20style-rustfmt-brightgreen.svg)
-![Clippy](https://img.shields.io/badge/lints-clippy%20clean-brightgreen.svg)
-![Tests](https://img.shields.io/badge/tests-sync%20%2B%20async%20%2B%20macros-brightgreen.svg)
+![linting](https://github.com/selcukcukur/pipx/actions/workflows/linting.yml/badge.svg)
+![tests](https://github.com/selcukcukur/pipx/actions/workflows/tests.yml/badge.svg)
+![benches](https://github.com/selcukcukur/pipx/actions/workflows/benches.yml/badge.svg)
+![examples](https://github.com/selcukcukur/pipx/actions/workflows/examples.yml/badge.svg)
+[![crates.io](https://img.shields.io/crates/v/pipx.svg)](https://crates.io/crates/pipx)
+[![docs.rs](https://docs.rs/pipx/badge.svg)](https://docs.rs/pipx)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](license.md)
 
-> Type-safe middleware and transform pipelines for Rust.
+> Built around the idea that every pipeline should remain explicit, predictable, and easy to reason about.
 
-**pipx** is a small, framework-agnostic pipeline crate for building clear data flows without
-giving up control over execution. It gives you two complementary models:
+**pipx** is a small, framework-agnostic pipeline crate for building clear, composable, and predictable data flows in Rust.
 
-* **`Pipeline`** for Laravel-inspired middleware. Each pipe receives a `Next` continuation, so it
-  can continue the chain, wrap the downstream result, short-circuit execution, or return an error.
-* **`TransformPipeline`** for direct sequential transforms. Each transform receives the current
-  value and returns the next value without middleware carry/continuation behavior.
+The crate is built around a continuation-based pipeline model that gives each pipe full 
+control over execution. A pipe may continue the chain, wrap the downstream result, 
+short-circuit execution, recover from failures, or return an error.
 
-Both models are fully generic over the passable value and pipe error type. Public execution methods
-return the centralized `PipelineError`, while individual pipes may use their own error types as long
-as they can be converted into `PipelineError`.
+**pipx** is fully generic over both the passable value and error type, making it suitable 
+for application pipelines, middleware systems, validation flows, request processing, 
+background jobs, and other data transformation workflows.
+
+Individual pipes may use their own error types as long as they can be converted into 
+`PipelineError`, allowing applications to maintain domain-specific errors internally
+while exposing a consistent public execution API.
 
 ## Features
 
-* Type-safe sync middleware pipelines with `Pipe`, `Next`, and `Pipeline`
-* Type-safe sync transform pipelines with `TransformPipe` and `TransformPipeline`
-* Optional async middleware and transform pipelines behind the `async` feature
-* Conditional composition with `when` and `unless`
-* Recovery and finalization with `rescue` and `finally`
-* Optional proc macros behind the `macros` feature
+* Type-safe pipelines with `Pipe`, `Next`, and `Pipeline`
+* Optional asynchronous pipeline support through the `async` feature
+* Conditional pipeline composition with `when` and `unless`
+* Error recovery with `rescue`
+* Finalization hooks with `finally`
+* Helper macros with `steps!` and `async_steps!`
+* Optional procedural macros through the `macros` feature
+* Fully generic passable values and error types
 * Centralized error handling through `PipelineError`
-* Criterion benchmarks split by sync, async, transform, middleware, and full pipeline scenarios
-* Focused Ubuntu-based CI workflows
-* Workspace rustfmt configuration through `rustfmt.toml`
-* Coverage reporting through cargo-tarpaulin and Codecov
-* Runnable crate examples for web adapters, validation, async jobs, and wgpu-style GPU pipelines
+* Support for synchronous and asynchronous execution models
+* Suitable for middleware, validation, processing, and workflow pipelines
 
 ## Installation
 
 The **pipx** crate can be installed with the default feature set or with optional features depending on your use case.
 
-### Default
+### With default
 
 Use the default installation if you only need synchronous pipelines.
 
@@ -60,7 +55,7 @@ cargo add pipx
 pipx = "0.1.0"
 ```
 
-### Async
+### Async Feature
 
 Enable the `async` feature if you want to use asynchronous pipelines.
 
@@ -75,7 +70,7 @@ cargo add pipx --features async
 pipx = { version = "0.1.0", features = ["async"] }
 ```
 
-### Macros
+### Macros Feature
 
 Enable the `macros` feature if you want to use procedural macros for pipe implementations.
 
@@ -90,7 +85,7 @@ cargo add pipx --features macros
 pipx = { version = "0.1.0", features = ["macros"] }
 ```
 
-### Everything
+### Full feature
 
 Enable the `full` feature if you want to use all available pipx features.
 
@@ -105,225 +100,1138 @@ cargo add pipx --features full
 pipx = { version = "0.1.0", features = ["full"] }
 ```
 
-## Quickstart
+## Quick Start
 
-### Best Practice: Middleware Pipeline
+Each example demonstrates one behavior at a time so you can quickly understand how pipelines 
+are created, how steps are attached, how execution is finalized, and how synchronous and 
+asynchronous pipelines differ.
 
-Use `Pipeline` when a step needs middleware behavior: authorization, validation, logging,
-short-circuiting, before/after wrapping, retries, or anything that must decide whether the next
-step should run.
+### Pipeline
+
+Use `pipeline` when you want to create a synchronous pipeline with an initial value.
 
 ```rust
-use std::sync::Arc;
-use pipx::{Next, Pipe, PipeResult, Pipeline};
+use pipx::{pipeline, Next, Pipe, PipelineResult};
 
-struct AddPrefix;
+struct Trim;
 
-impl Pipe<String> for AddPrefix {
-    fn handle(&self, passable: String, next: Next<'_, String>) -> PipeResult<String> {
-        next.handle(format!("app:{passable}"))
+impl Pipe<String> for Trim {
+    fn handle(
+        &self,
+        passable: String,
+        next: Next<'_, String>,
+    ) -> PipelineResult<String> {
+        // Modify the incoming value before passing it to the next step.
+        let passable = passable.trim().to_string();
+
+        // Continue the pipeline with the updated value.
+        next.handle(passable)
     }
 }
+
+fn main() -> pipx::PipelineResult<()> {
+    // Create a pipeline with an initial value.
+    let output = pipeline("  hello  ".to_string())
+        // Append a single pipeline step.
+        .pipe(Trim)
+        // Execute the pipeline and return the final value.
+        .then_return()?;
+
+    assert_eq!(output, "hello");
+
+    Ok(())
+}
+```
+
+### Pipeline with `then_return`
+
+Use `then_return` when you want the pipeline to return the final processed value without applying an additional transformation.
+
+```rust
+use pipx::{pipeline, Next, Pipe, PipelineResult};
+
+struct Uppercase;
+
+impl Pipe<String> for Uppercase {
+    fn handle(
+        &self,
+        passable: String,
+        next: Next<'_, String>,
+    ) -> PipelineResult<String> {
+        // Convert the value before continuing the pipeline.
+        next.handle(passable.to_uppercase())
+    }
+}
+
+fn main() -> pipx::PipelineResult<()> {
+    let output = pipeline("hello".to_string())
+        .pipe(Uppercase)
+        .then_return()?;
+
+    assert_eq!(output, "HELLO");
+
+    Ok(())
+}
+```
+
+### Pipeline with `then`
+
+Use `then` when you want to execute the pipeline and transform the final value into another type.
+
+```rust
+use pipx::{pipeline, Next, Pipe, PipelineResult};
+
+struct Uppercase;
+
+impl Pipe<String> for Uppercase {
+    fn handle(
+        &self,
+        passable: String,
+        next: Next<'_, String>,
+    ) -> PipelineResult<String> {
+        next.handle(passable.to_uppercase())
+    }
+}
+
+fn main() -> pipx::PipelineResult<()> {
+    let length = pipeline("hello".to_string())
+        .pipe(Uppercase)
+        // Execute the pipeline, then map the final String into its length.
+        .then(|value| value.len())?;
+
+    assert_eq!(length, 5);
+
+    Ok(())
+}
+```
+
+### Pipeline with `through`
+
+Use `through` when you want to set the full list of pipeline steps at once.
+
+```rust
+use pipx::{pipeline, steps, Next, Pipe, PipelineResult};
+
+struct Trim;
+struct Uppercase;
+
+impl Pipe<String> for Trim {
+    fn handle(
+        &self,
+        passable: String,
+        next: Next<'_, String>,
+    ) -> PipelineResult<String> {
+        next.handle(passable.trim().to_string())
+    }
+}
+
+impl Pipe<String> for Uppercase {
+    fn handle(
+        &self,
+        passable: String,
+        next: Next<'_, String>,
+    ) -> PipelineResult<String> {
+        next.handle(passable.to_uppercase())
+    }
+}
+
+fn main() -> pipx::PipelineResult<()> {
+    let output = pipeline("  hello  ".to_string())
+        // Replace the current pipeline steps with the provided step list.
+        .through(steps![Trim, Uppercase])
+        .then_return()?;
+
+    assert_eq!(output, "HELLO");
+
+    Ok(())
+}
+```
+
+### Pipeline with `when`
+
+Use `when` when you want to append a step only if a condition is `true`.
+
+```rust
+use pipx::{pipeline, Next, Pipe, PipelineResult};
+
+struct Uppercase;
+
+impl Pipe<String> for Uppercase {
+    fn handle(
+        &self,
+        passable: String,
+        next: Next<'_, String>,
+    ) -> PipelineResult<String> {
+        next.handle(passable.to_uppercase())
+    }
+}
+
+fn main() -> pipx::PipelineResult<()> {
+    let should_uppercase = true;
+
+    let output = pipeline("hello".to_string())
+        // Append Uppercase only when the condition is true.
+        .when(should_uppercase, Uppercase)
+        .then_return()?;
+
+    assert_eq!(output, "HELLO");
+
+    Ok(())
+}
+```
+
+### Pipeline with `unless`
+
+Use `unless` when you want to append a step only if a condition is `false`.
+
+```rust
+use pipx::{pipeline, Next, Pipe, PipelineResult};
+
+struct Uppercase;
+
+impl Pipe<String> for Uppercase {
+    fn handle(
+        &self,
+        passable: String,
+        next: Next<'_, String>,
+    ) -> PipelineResult<String> {
+        next.handle(passable.to_uppercase())
+    }
+}
+
+fn main() -> pipx::PipelineResult<()> {
+    let skip_uppercase = false;
+
+    let output = pipeline("hello".to_string())
+        // Append Uppercase only when the condition is false.
+        .unless(skip_uppercase, Uppercase)
+        .then_return()?;
+
+    assert_eq!(output, "HELLO");
+
+    Ok(())
+}
+```
+
+### Pipeline with `finally`
+
+Use `finally` when you want to run a callback after pipeline execution completes.
+
+The callback runs whether the pipeline succeeds or fails.
+
+```rust
+use pipx::{pipeline, Next, Pipe, PipelineResult};
+
+struct Uppercase;
+
+impl Pipe<String> for Uppercase {
+    fn handle(
+        &self,
+        passable: String,
+        next: Next<'_, String>,
+    ) -> PipelineResult<String> {
+        next.handle(passable.to_uppercase())
+    }
+}
+
+fn main() -> pipx::PipelineResult<()> {
+    let output = pipeline("hello".to_string())
+        .pipe(Uppercase)
+        // Run after the pipeline finishes.
+        .finally(|result| {
+            println!("Pipeline finished: {result:?}");
+        })
+        .then_return()?;
+
+    assert_eq!(output, "HELLO");
+
+    Ok(())
+}
+```
+
+### Pipeline with `rescue`
+
+Use `rescue` when you want to recover from pipeline execution errors with a fallback value.
+
+```rust
+use pipx::{pipeline, Next, Pipe, PipelineError, PipelineResult};
+
+struct Fail;
+
+impl Pipe<String> for Fail {
+    fn handle(
+        &self,
+        _passable: String,
+        _next: Next<'_, String>,
+    ) -> PipelineResult<String> {
+        // Stop the pipeline by returning an error.
+        Err(PipelineError::Message("pipeline failed".to_string()))
+    }
+}
+
+fn main() -> pipx::PipelineResult<()> {
+    let output = pipeline("hello".to_string())
+        .pipe(Fail)
+        // Convert the error into a fallback value.
+        .rescue(|_| "fallback".to_string())?;
+
+    assert_eq!(output, "fallback");
+
+    Ok(())
+}
+```
+
+### Pipeline Short-Circuiting
+
+A pipe can stop the chain by not calling `next.handle`.
+
+```rust
+use pipx::{pipeline, Next, Pipe, PipelineResult};
+
+struct Stop;
+
+impl Pipe<String> for Stop {
+    fn handle(
+        &self,
+        passable: String,
+        _next: Next<'_, String>,
+    ) -> PipelineResult<String> {
+        // Return early without continuing to the remaining steps.
+        Ok(format!("{passable}:stopped"))
+    }
+}
+
+struct NeverRuns;
+
+impl Pipe<String> for NeverRuns {
+    fn handle(
+        &self,
+        passable: String,
+        next: Next<'_, String>,
+    ) -> PipelineResult<String> {
+        next.handle(format!("never:{passable}"))
+    }
+}
+
+fn main() -> pipx::PipelineResult<()> {
+    let output = pipeline("hello".to_string())
+        .pipe(Stop)
+        .pipe(NeverRuns)
+        .then_return()?;
+
+    assert_eq!(output, "hello:stopped");
+
+    Ok(())
+}
+```
+
+### Pipeline Wrapping
+
+A pipe can call `next.handle` and then wrap or modify the downstream result.
+
+```rust
+use pipx::{pipeline, Next, Pipe, PipelineResult};
 
 struct Wrap;
 
 impl Pipe<String> for Wrap {
-    fn handle(&self, passable: String, next: Next<'_, String>) -> PipeResult<String> {
-        let value = next.handle(passable)?;
-        Ok(format!("[{value}]"))
+    fn handle(
+        &self,
+        passable: String,
+        next: Next<'_, String>,
+    ) -> PipelineResult<String> {
+        // Continue the pipeline first.
+        let result = next.handle(passable)?;
+
+        // Modify the value after downstream steps have completed.
+        Ok(format!("[{result}]"))
     }
 }
 
-let output = Pipeline::new()
-    .send("hello".to_string())
-    .through(vec![Arc::new(Wrap), Arc::new(AddPrefix)])
-    .then_return()?;
+fn main() -> pipx::PipelineResult<()> {
+    let output = pipeline("hello".to_string())
+        .pipe(Wrap)
+        .then_return()?;
 
-assert_eq!(output, "[app:hello]");
-# Ok::<(), pipx::PipelineError>(())
+    assert_eq!(output, "[hello]");
+
+    Ok(())
+}
 ```
 
-### Best Practice: Transform Pipeline
+### Async Pipeline
 
-Use `TransformPipeline` when every step is a pure “input to output” transform and does not need to
-control the remaining chain.
+Use `async_pipeline` when you want to create an asynchronous pipeline.
+
+This requires the `async` feature.
 
 ```rust
-use std::sync::Arc;
-use pipx::{TransformPipe, TransformPipeResult, TransformPipeline};
+use async_trait::async_trait;
+use pipx::{async_pipeline, AsyncNext, AsyncPipe, PipelineResult};
 
-struct Upper;
+struct AsyncUppercase;
 
-impl TransformPipe<String> for Upper {
-    fn handle(&self, passable: String) -> TransformPipeResult<String> {
-        Ok(passable.to_uppercase())
+#[async_trait]
+impl AsyncPipe<String> for AsyncUppercase {
+    async fn handle(
+        &self,
+        passable: String,
+        next: AsyncNext<'_, String>,
+    ) -> PipelineResult<String> {
+        // Modify the value asynchronously before continuing.
+        next.handle(passable.to_uppercase()).await
     }
 }
 
-let output = TransformPipeline::new()
-    .send("hello".to_string())
-    .through(vec![Arc::new(Upper)])
-    .then_return()?;
+#[tokio::main]
+async fn main() -> pipx::PipelineResult<()> {
+    let output = async_pipeline("hello".to_string())
+        .pipe(AsyncUppercase)
+        .then_return()
+        .await?;
 
-assert_eq!(output, "HELLO");
-# Ok::<(), pipx::PipelineError>(())
+    assert_eq!(output, "HELLO");
+
+    Ok(())
+}
 ```
 
-## API
+### Async Pipeline with `then_return`
 
-### Core Types
-
-#### `Pipeline<TPassable, TError = PipelineError>`
-
-Middleware pipeline. Use it when a pipe must receive `Next`.
-
-Methods:
-
-* `Pipeline::new() -> Self` creates an empty pipeline.
-* `.send(passable) -> Self` sets the initial value.
-* `.through(Vec<PipelineStep<TPassable, TError>>) -> Self` appends middleware pipes in order.
-* `.when(condition, pipe) -> Self` appends `pipe` only when `condition` is `true`.
-* `.unless(condition, pipe) -> Self` appends `pipe` only when `condition` is `false`.
-  execution; without it, the callback observes the current sent value immediately.
-* `.finally(callback) -> Self` runs after success or failure and receives `&PipelineResult<T>`.
-* `.then(destination) -> PipelineResult<R>` executes the chain and maps the final value.
-* `.then_return() -> PipelineResult<TPassable>` executes the chain and returns the final value.
-* `.rescue(recovery) -> PipelineResult<TPassable>` recovers from pipeline errors with a fallback
-  value. Missing input still returns `PipelineError::InputMissing`.
-
-#### `Pipe<TPassable, TError = PipelineError>`
-
-Middleware trait.
+Use `then_return` when you want the asynchronous pipeline to return the final processed value.
 
 ```rust
-fn handle(
-    &self,
-    passable: TPassable,
-    next: Next<'_, TPassable, TError>,
-) -> PipeResult<TPassable, TError>;
+use async_trait::async_trait;
+use pipx::{async_pipeline, AsyncNext, AsyncPipe, PipelineResult};
+
+struct AsyncTrim;
+
+#[async_trait]
+impl AsyncPipe<String> for AsyncTrim {
+    async fn handle(
+        &self,
+        passable: String,
+        next: AsyncNext<'_, String>,
+    ) -> PipelineResult<String> {
+        next.handle(passable.trim().to_string()).await
+    }
+}
+
+#[tokio::main]
+async fn main() -> pipx::PipelineResult<()> {
+    let output = async_pipeline("  hello  ".to_string())
+        .pipe(AsyncTrim)
+        .then_return()
+        .await?;
+
+    assert_eq!(output, "hello");
+
+    Ok(())
+}
 ```
 
-Parameters:
+### Async Pipeline with `then`
 
-* `passable` is the current value.
-* `next` is the continuation for the remaining middleware stack.
-
-Return `next.handle(passable)` to continue, return `Ok(value)` to short-circuit successfully, or
-return `Err(error)` to stop with an error.
-
-#### `Next<'a, TPassable, TError = PipelineError>`
-
-Continuation passed to middleware.
-
-* `.handle(passable) -> PipeResult<TPassable, TError>` executes the next middleware or the final
-  destination if no middleware remains.
-
-#### `TransformPipeline<TPassable, TError = PipelineError>`
-
-Sequential transform pipeline. Use it when pipes do not need `Next`.
-
-Methods:
-
-* `TransformPipeline::new() -> Self` creates an empty transform pipeline.
-* `.send(passable) -> Self` sets the initial value.
-* `.through(Vec<TransformPipelineStep<TPassable, TError>>) -> Self` appends transforms in order.
-* `.when(condition, pipe) -> Self` appends `pipe` only when `condition` is `true`.
-* `.unless(condition, pipe) -> Self` appends `pipe` only when `condition` is `false`.
-* `.finally(callback) -> Self` runs after success or failure and receives `&PipelineResult<T>`.
-* `.then(destination) -> PipelineResult<R>` executes transforms and maps the final value.
-* `.then_return() -> PipelineResult<TPassable>` executes transforms and returns the final value.
-* `.rescue(recovery) -> PipelineResult<TPassable>` recovers from transform errors.
-
-#### `TransformPipe<TPassable, TError = PipelineError>`
-
-Transform trait.
+Use `then` when you want to execute an asynchronous pipeline and transform the final value.
 
 ```rust
-fn handle(&self, passable: TPassable) -> TransformPipeResult<TPassable, TError>;
+use async_trait::async_trait;
+use pipx::{async_pipeline, AsyncNext, AsyncPipe, PipelineResult};
+
+struct AsyncTrim;
+
+#[async_trait]
+impl AsyncPipe<String> for AsyncTrim {
+    async fn handle(
+        &self,
+        passable: String,
+        next: AsyncNext<'_, String>,
+    ) -> PipelineResult<String> {
+        next.handle(passable.trim().to_string()).await
+    }
+}
+
+#[tokio::main]
+async fn main() -> pipx::PipelineResult<()> {
+    let length = async_pipeline("  hello  ".to_string())
+        .pipe(AsyncTrim)
+        // Execute the async pipeline, then map the final value into another type.
+        .then(|value| value.len())
+        .await?;
+
+    assert_eq!(length, 5);
+
+    Ok(())
+}
 ```
 
-Parameters:
+### Async Pipeline with `through`
 
-* `passable` is the current value.
+Use `through` with `async_steps!` when you want to set multiple asynchronous steps at once.
 
-Return `Ok(value)` to continue with the next transform or `Err(error)` to stop execution.
+```rust
+use async_trait::async_trait;
+use pipx::{async_pipeline, async_steps, AsyncNext, AsyncPipe, PipelineResult};
 
-### Async API
+struct AsyncTrim;
+struct AsyncUppercase;
 
-Enable with:
+#[async_trait]
+impl AsyncPipe<String> for AsyncTrim {
+    async fn handle(
+        &self,
+        passable: String,
+        next: AsyncNext<'_, String>,
+    ) -> PipelineResult<String> {
+        next.handle(passable.trim().to_string()).await
+    }
+}
 
-```toml
-pipx = { version = "1", features = ["async"] }
+#[async_trait]
+impl AsyncPipe<String> for AsyncUppercase {
+    async fn handle(
+        &self,
+        passable: String,
+        next: AsyncNext<'_, String>,
+    ) -> PipelineResult<String> {
+        next.handle(passable.to_uppercase()).await
+    }
+}
+
+#[tokio::main]
+async fn main() -> pipx::PipelineResult<()> {
+    let output = async_pipeline("  hello  ".to_string())
+        // Replace the current async pipeline steps with the provided step list.
+        .through(async_steps![AsyncTrim, AsyncUppercase])
+        .then_return()
+        .await?;
+
+    assert_eq!(output, "HELLO");
+
+    Ok(())
+}
 ```
 
-Types:
+### Async Pipeline with `when`
 
-* `AsyncPipeline<TPassable, TError = PipelineError>`
-* `AsyncPipe<TPassable, TError = PipelineError>`
-* `AsyncNext<'a, TPassable, TError = PipelineError>`
-* `AsyncTransformPipeline<TPassable, TError = PipelineError>`
-* `AsyncTransformPipe<TPassable, TError = PipelineError>`
+Use `when` when you want to append an asynchronous step only if a condition is `true`.
 
-Async methods mirror the sync API where available:
+```rust
+use async_trait::async_trait;
+use pipx::{async_pipeline, AsyncNext, AsyncPipe, PipelineResult};
 
-* `AsyncPipeline::new().send(value).through(pipes).then_return().await`
-* `AsyncPipeline::new().send(value).through(pipes).then(destination).await`
-* `AsyncTransformPipeline::new().send(value).through(pipes).then_return().await`
-* `AsyncTransformPipeline::new().send(value).through(pipes).then(destination).await`
+struct AsyncUppercase;
 
-### Result Aliases
+#[async_trait]
+impl AsyncPipe<String> for AsyncUppercase {
+    async fn handle(
+        &self,
+        passable: String,
+        next: AsyncNext<'_, String>,
+    ) -> PipelineResult<String> {
+        next.handle(passable.to_uppercase()).await
+    }
+}
 
-* `PipelineResult<T> = Result<T, PipelineError>`
-* `PipeResult<T, E = PipelineError> = Result<T, E>`
-* `TransformPipeResult<T, E = PipelineError> = Result<T, E>`
+#[tokio::main]
+async fn main() -> pipx::PipelineResult<()> {
+    let should_uppercase = true;
 
-### Shared Pipe Aliases
+    let output = async_pipeline("hello".to_string())
+        .when(should_uppercase, AsyncUppercase)
+        .then_return()
+        .await?;
 
-* `PipelineStep<T, E = PipelineError> = Arc<dyn Pipe<T, E> + Send + Sync>`
-* `TransformPipelineStep<T, E = PipelineError> = Arc<dyn TransformPipe<T, E> + Send + Sync>`
-* `AsyncPipelineStep<T, E = PipelineError> = Arc<dyn AsyncPipe<T, E> + Send + Sync>`
-* `AsyncTransformPipelineStep<T, E = PipelineError> = Arc<dyn AsyncTransformPipe<T, E> + Send + Sync>`
+    assert_eq!(output, "HELLO");
 
-### Errors
-
-`PipelineError` is the public error returned by pipeline execution:
-
-* `PipelineError::StepFailure(StepFailure)` for named step failures.
-* `PipelineError::InputMissing` when `then`, `then_return`, or `rescue` is called before `send`.
-* `PipelineError::DispatchError(DispatchError)` for dispatch-layer failures.
-* `PipelineError::RescueFailure(RescueFailure)` for rescue-layer failures.
-* `PipelineError::Custom(Box<dyn Error + Send + Sync>)` for external error types.
-
-Custom pipe errors are supported by implementing `From<YourError> for PipelineError` or
-`Into<PipelineError>` for the error type.
-
-### Macros
-
-Enable with:
-
-```toml
-pipx = { version = "1", features = ["macros"] }
+    Ok(())
+}
 ```
 
-Available attributes:
+### Async Pipeline with `unless`
 
-* `#[pipe(PassableType, ErrorType)]` implements middleware `Pipe`.
-* `#[transform_pipe(PassableType, ErrorType)]` implements `TransformPipe`.
+Use `unless` when you want to append an asynchronous step only if a condition is `false`.
 
-## Benchmarks
+```rust
+use async_trait::async_trait;
+use pipx::{async_pipeline, AsyncNext, AsyncPipe, PipelineResult};
 
-Benchmarks live under `benches/*` and cover:
+struct AsyncUppercase;
 
-* `pipeline` - full middleware plus transform stress benchmark over 1000 items,
-* `sync_transform` - synchronous transform throughput,
-* `sync_middleware` - synchronous middleware throughput and short-circuit cost,
-* `async_transform` - asynchronous transform throughput,
-* `async_middleware` - asynchronous middleware throughput and short-circuit cost.
+#[async_trait]
+impl AsyncPipe<String> for AsyncUppercase {
+    async fn handle(
+        &self,
+        passable: String,
+        next: AsyncNext<'_, String>,
+    ) -> PipelineResult<String> {
+        next.handle(passable.to_uppercase()).await
+    }
+}
 
-Run them with:
+#[tokio::main]
+async fn main() -> pipx::PipelineResult<()> {
+    let skip_uppercase = false;
+
+    let output = async_pipeline("hello".to_string())
+        .unless(skip_uppercase, AsyncUppercase)
+        .then_return()
+        .await?;
+
+    assert_eq!(output, "HELLO");
+
+    Ok(())
+}
+```
+
+### Async Pipeline with `finally`
+
+Use `finally` when you want to run a callback after asynchronous pipeline execution completes.
+
+```rust
+use async_trait::async_trait;
+use pipx::{async_pipeline, AsyncNext, AsyncPipe, PipelineResult};
+
+struct AsyncUppercase;
+
+#[async_trait]
+impl AsyncPipe<String> for AsyncUppercase {
+    async fn handle(
+        &self,
+        passable: String,
+        next: AsyncNext<'_, String>,
+    ) -> PipelineResult<String> {
+        next.handle(passable.to_uppercase()).await
+    }
+}
+
+#[tokio::main]
+async fn main() -> PipelineResult<()> {
+    let output = async_pipeline("hello".to_string())
+        .pipe(AsyncUppercase)
+        .finally(|result| {
+            println!("Async pipeline finished: {result:?}");
+        })
+        .then_return()
+        .await?;
+
+    assert_eq!(output, "HELLO");
+
+    Ok(())
+}
+```
+
+### Async Pipeline with `rescue`
+
+Use `rescue` when you want to recover from asynchronous pipeline errors with a fallback value.
+
+```rust
+use async_trait::async_trait;
+use pipx::{async_pipeline, AsyncNext, AsyncPipe, PipelineError, PipelineResult};
+
+struct AsyncFail;
+
+#[async_trait]
+impl AsyncPipe<String> for AsyncFail {
+    async fn handle(
+        &self,
+        _passable: String,
+        _next: AsyncNext<'_, String>,
+    ) -> PipelineResult<String> {
+        Err(PipelineError::Message("async pipeline failed".to_string()))
+    }
+}
+
+#[tokio::main]
+async fn main() -> PipelineResult<()> {
+    let output = async_pipeline("hello".to_string())
+        .pipe(AsyncFail)
+        .rescue(|_| "fallback".to_string())
+        .await?;
+
+    assert_eq!(output, "fallback");
+
+    Ok(())
+}
+```
+
+## Advanced
+
+The examples below focus on composition, short-circuiting, wrapping downstream results, 
+custom errors, shared step collections, and asynchronous job-style workflows.
+
+### Wrapping Downstream Results
+
+A pipe can call `next.handle` first and then modify the value returned by the remaining pipeline.
+
+This is useful for response wrapping, instrumentation, logging, tracing, or post-processing.
+
+```rust
+use pipx::{pipeline, Next, Pipe, PipelineResult};
+
+struct Wrap;
+
+impl Pipe<String> for Wrap {
+    fn handle(
+        &self,
+        passable: String,
+        next: Next<'_, String>,
+    ) -> PipelineResult<String> {
+        // Continue the rest of the pipeline first.
+        let result = next.handle(passable)?;
+
+        // Wrap the downstream result after all following steps have completed.
+        Ok(format!("[{result}]"))
+    }
+}
+
+struct Uppercase;
+
+impl Pipe<String> for Uppercase {
+    fn handle(
+        &self,
+        passable: String,
+        next: Next<'_, String>,
+    ) -> PipelineResult<String> {
+        next.handle(passable.to_uppercase())
+    }
+}
+
+fn main() -> pipx::PipelineResult<()> {
+    let output = pipeline("hello".to_string())
+        .pipe(Wrap)
+        .pipe(Uppercase)
+        .then_return()?;
+
+    assert_eq!(output, "[HELLO]");
+
+    Ok(())
+}
+```
+
+### Short-Circuiting Execution
+
+A pipe can stop execution by returning a value without calling `next.handle`.
+
+This is useful for cache hits, authorization failures, validation exits, or fallback behavior.
+
+```rust
+use pipx::{pipeline, Next, Pipe, PipelineResult};
+
+struct Stop;
+
+impl Pipe<String> for Stop {
+    fn handle(
+        &self,
+        passable: String,
+        _next: Next<'_, String>,
+    ) -> PipelineResult<String> {
+        // Do not continue to the remaining steps.
+        Ok(format!("{passable}:stopped"))
+    }
+}
+
+struct NeverRuns;
+
+impl Pipe<String> for NeverRuns {
+    fn handle(
+        &self,
+        passable: String,
+        next: Next<'_, String>,
+    ) -> PipelineResult<String> {
+        next.handle(format!("never:{passable}"))
+    }
+}
+
+fn main() -> pipx::PipelineResult<()> {
+    let output = pipeline("job".to_string())
+        .pipe(Stop)
+        .pipe(NeverRuns)
+        .then_return()?;
+
+    assert_eq!(output, "job:stopped");
+
+    Ok(())
+}
+```
+
+### Validation Pipeline
+
+Pipelines work well for validation flows because each pipe can either continue with the value or stop with an error.
+
+```rust
+use pipx::{pipeline, Next, Pipe, PipelineError, PipelineResult};
+
+struct UserInput {
+    username: String,
+    password: String,
+}
+
+struct ValidateUsername;
+
+impl Pipe<UserInput> for ValidateUsername {
+    fn handle(
+        &self,
+        passable: UserInput,
+        next: Next<'_, UserInput>,
+    ) -> PipelineResult<UserInput> {
+        if passable.username.trim().is_empty() {
+            return Err(PipelineError::Message("username is required".to_string()));
+        }
+
+        next.handle(passable)
+    }
+}
+
+struct ValidatePassword;
+
+impl Pipe<UserInput> for ValidatePassword {
+    fn handle(
+        &self,
+        passable: UserInput,
+        next: Next<'_, UserInput>,
+    ) -> PipelineResult<UserInput> {
+        if passable.password.len() < 8 {
+            return Err(PipelineError::Message("password is too short".to_string()));
+        }
+
+        next.handle(passable)
+    }
+}
+
+fn main() -> pipx::PipelineResult<()> {
+    let input = UserInput {
+        username: "selcuk".to_string(),
+        password: "secret-password".to_string(),
+    };
+
+    let validated = pipeline(input)
+        .pipe(ValidateUsername)
+        .pipe(ValidatePassword)
+        .then_return()?;
+
+    assert_eq!(validated.username, "selcuk");
+
+    Ok(())
+}
+```
+
+### Shared Step Collections
+
+Use `steps!` when you want to define reusable groups of pipeline steps.
+
+```rust
+use pipx::{pipeline, steps, Next, Pipe, PipelineResult};
+
+struct Trim;
+struct Uppercase;
+struct Prefix(&'static str);
+
+impl Pipe<String> for Trim {
+    fn handle(
+        &self,
+        passable: String,
+        next: Next<'_, String>,
+    ) -> PipelineResult<String> {
+        next.handle(passable.trim().to_string())
+    }
+}
+
+impl Pipe<String> for Uppercase {
+    fn handle(
+        &self,
+        passable: String,
+        next: Next<'_, String>,
+    ) -> PipelineResult<String> {
+        next.handle(passable.to_uppercase())
+    }
+}
+
+impl Pipe<String> for Prefix {
+    fn handle(
+        &self,
+        passable: String,
+        next: Next<'_, String>,
+    ) -> PipelineResult<String> {
+        next.handle(format!("{}{}", self.0, passable))
+    }
+}
+
+fn main() -> pipx::PipelineResult<()> {
+    let output = pipeline("  admin  ".to_string())
+        .through(steps![
+            Trim,
+            Uppercase,
+            Prefix("USER:"),
+        ])
+        .then_return()?;
+
+    assert_eq!(output, "USER:ADMIN");
+
+    Ok(())
+}
+```
+
+### Conditional Runtime Composition
+
+Use `when` and `unless` when the pipeline should be assembled based on runtime state.
+
+```rust
+use pipx::{pipeline, Next, Pipe, PipelineResult};
+
+struct Trim;
+struct DebugPrefix;
+
+impl Pipe<String> for Trim {
+    fn handle(
+        &self,
+        passable: String,
+        next: Next<'_, String>,
+    ) -> PipelineResult<String> {
+        next.handle(passable.trim().to_string())
+    }
+}
+
+impl Pipe<String> for DebugPrefix {
+    fn handle(
+        &self,
+        passable: String,
+        next: Next<'_, String>,
+    ) -> PipelineResult<String> {
+        next.handle(format!("debug:{passable}"))
+    }
+}
+
+fn main() -> pipx::PipelineResult<()> {
+    let debug_enabled = true;
+    let skip_trim = false;
+
+    let output = pipeline("  request  ".to_string())
+        .unless(skip_trim, Trim)
+        .when(debug_enabled, DebugPrefix)
+        .then_return()?;
+
+    assert_eq!(output, "debug:request");
+
+    Ok(())
+}
+```
+
+### Error Recovery
+
+Use `rescue` when pipeline errors should be converted into a fallback value.
+
+`InputMissing` is not recovered because it represents an invalid pipeline configuration rather than a step execution failure.
+
+```rust
+use pipx::{pipeline, Next, Pipe, PipelineError, PipelineResult};
+
+struct FailingStep;
+
+impl Pipe<String> for FailingStep {
+    fn handle(
+        &self,
+        _passable: String,
+        _next: Next<'_, String>,
+    ) -> PipelineResult<String> {
+        Err(PipelineError::Message("step failed".to_string()))
+    }
+}
+
+fn main() -> pipx::PipelineResult<()> {
+    let output = pipeline("hello".to_string())
+        .pipe(FailingStep)
+        .rescue(|error| {
+            format!("fallback because: {error}")
+        })?;
+
+    assert!(output.starts_with("fallback because:"));
+
+    Ok(())
+}
+```
+
+### Finalization Hooks
+
+Use `finally` when you need to observe the final result without changing it.
+
+This is useful for logging, metrics, tracing, cleanup, or debugging.
+
+```rust
+use pipx::{pipeline, Next, Pipe, PipelineResult};
+
+struct Uppercase;
+
+impl Pipe<String> for Uppercase {
+    fn handle(
+        &self,
+        passable: String,
+        next: Next<'_, String>,
+    ) -> PipelineResult<String> {
+        next.handle(passable.to_uppercase())
+    }
+}
+
+fn main() -> pipx::PipelineResult<()> {
+    let output = pipeline("hello".to_string())
+        .pipe(Uppercase)
+        .finally(|result| {
+            println!("Final pipeline result: {result:?}");
+        })
+        .then_return()?;
+
+    assert_eq!(output, "HELLO");
+
+    Ok(())
+}
+```
+
+### Async Background Job Pipeline
+
+Asynchronous pipelines are useful for job processing, queue workflows, I/O-heavy steps, and other async workloads.
+
+```rust
+use async_trait::async_trait;
+use pipx::{async_pipeline, async_steps, AsyncNext, AsyncPipe, PipelineResult};
+
+#[derive(Debug)]
+struct Job {
+    id: u64,
+    attempts: u8,
+    events: Vec<String>,
+}
+
+struct LoadFromQueue;
+struct ExecuteJob;
+
+#[async_trait]
+impl AsyncPipe<Job> for LoadFromQueue {
+    async fn handle(
+        &self,
+        mut passable: Job,
+        next: AsyncNext<'_, Job>,
+    ) -> PipelineResult<Job> {
+        passable.events.push("queue:loaded".to_string());
+
+        next.handle(passable).await
+    }
+}
+
+#[async_trait]
+impl AsyncPipe<Job> for ExecuteJob {
+    async fn handle(
+        &self,
+        mut passable: Job,
+        next: AsyncNext<'_, Job>,
+    ) -> PipelineResult<Job> {
+        passable.attempts += 1;
+        passable.events.push("job:executed".to_string());
+
+        next.handle(passable).await
+    }
+}
+
+#[tokio::main]
+async fn main() -> pipx::PipelineResult<()> {
+    let job = Job {
+        id: 100,
+        attempts: 0,
+        events: Vec::new(),
+    };
+
+    let job = async_pipeline(job)
+        .through(async_steps![
+            LoadFromQueue,
+            ExecuteJob,
+        ])
+        .then_return()
+        .await?;
+
+    assert_eq!(job.attempts, 1);
+    assert_eq!(job.events, vec!["queue:loaded", "job:executed"]);
+
+    Ok(())
+}
+```
+
+### Async Error Recovery
+
+Asynchronous pipelines can also recover from execution errors with `rescue`.
+
+```rust
+use async_trait::async_trait;
+use pipx::{async_pipeline, AsyncNext, AsyncPipe, PipelineError, PipelineResult};
+
+struct AsyncFail;
+
+#[async_trait]
+impl AsyncPipe<String> for AsyncFail {
+    async fn handle(
+        &self,
+        _passable: String,
+        _next: AsyncNext<'_, String>,
+    ) -> PipelineResult<String> {
+        Err(PipelineError::Message("async step failed".to_string()))
+    }
+}
+
+#[tokio::main]
+async fn main() -> pipx::PipelineResult<()> {
+    let output = async_pipeline("job".to_string())
+        .pipe(AsyncFail)
+        .rescue(|error| {
+            format!("recovered from: {error}")
+        })
+        .await?;
+
+    assert!(output.starts_with("recovered from:"));
+
+    Ok(())
+}
+```
+
+## Benchmark
+
+The repository includes Criterion benchmarks for measuring pipeline execution performance under different execution models and workloads.
+
+### All Benchmarks
+
+Runs every available benchmark suite.
 
 ```bash
 cargo bench -p pipx
+```
+
+### Pipeline Benchmarks
+
+Measures execution throughput, step traversal, and short-circuit behavior for standard pipelines.
+
+```bash
+cargo bench -p pipx --bench pipeline
+```
+
+### Transform Pipeline Benchmarks
+
+Measures throughput for transform pipelines that process values sequentially without pipeline continuations.
+
+```bash
+cargo bench -p pipx --bench pipeline_transform
+```
+
+### Async Pipeline Benchmarks
+
+Measures execution throughput, step traversal, and short-circuit behavior for asynchronous pipelines.
+
+```bash
+cargo bench -p pipx --features async --bench async_pipeline
+```
+
+### Async Transform Pipeline Benchmarks
+
+Measures throughput for asynchronous transform pipelines operating on asynchronous workloads.
+
+```bash
+cargo bench -p pipx --features async --bench async_pipeline_transform
 ```
 
 ## Examples
@@ -343,10 +1251,6 @@ cargo run -p pipx --features async --example async_jobs
 The web and GPU examples use framework-shaped adapter types instead of forcing heavy framework or
 GPU dependencies into the crate. They show how to place pipx around Axum-like handlers,
 Actix-like service requests, validation flows, async jobs, and wgpu-style render command pipelines.
-
-## API
-
-- 
 
 ## Contributing
 

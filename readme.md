@@ -1,3 +1,4 @@
+> Built around the idea that every pipeline should remain explicit, predictable, and easy to reason about.
 
 ## Contributing
 
