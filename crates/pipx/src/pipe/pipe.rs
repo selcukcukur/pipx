@@ -1,16 +1,24 @@
 use crate::{Next, PipelineError, PipelineResult};
 
-/// A middleware pipe that can decide whether and when to call the next step.
+/// Defines a pipeline step.
+///
+/// A pipe receives the current value and a [`Next`] continuation.
+/// It may continue the pipeline, stop execution early, wrap the downstream
+/// result, or return an error.
+///
+/// **Generics**
+/// - `TPassable` - The value processed by the pipeline.
+/// - `TError` - The error type returned by the pipe.
 pub trait Pipe<TPassable, TError = PipelineError> {
-    /// Handles a passable value and optionally continues the middleware chain.
+    /// Handles the current pipeline value.
     ///
     /// **Parameters**
-    /// - `passable` - The current value flowing through the pipeline.
-    /// - `next` - The continuation for the remaining middleware stack.
+    /// - `passable` - The current value being passed through the pipeline.
+    /// - `next` - The continuation for the remaining pipeline steps.
     ///
     /// **Returns**
-    /// - `Ok(TPassable)` - The middleware completed successfully.
-    /// - `Err(TError)` - The middleware failed and stopped execution.
+    /// - `Ok(TPassable)` - The value produced by the pipe or the remaining pipeline steps.
+    /// - `Err(TError)` - The pipe failed and stopped pipeline execution.
     fn handle(
         &self,
         passable: TPassable,

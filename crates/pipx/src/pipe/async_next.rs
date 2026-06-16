@@ -2,7 +2,7 @@ use crate::{
     AsyncPipelineDestination,
     AsyncPipelineFuture,
     AsyncPipelineStep,
-    PipelineError
+    PipelineError,
 };
 
 /// Asynchronous pipeline continuation.
@@ -46,7 +46,7 @@ where
     /// Continues the asynchronous pipeline execution.
     ///
     /// **Parameters**
-    /// - `passable` - The value that should be passed to the next asynchronous step.
+    /// - `passable` - The value that should be passed to the next asynchronous pipeline step.
     ///
     /// **Returns**
     /// - `Ok(TPassable)` - The value produced after the remaining asynchronous pipeline steps have completed successfully.

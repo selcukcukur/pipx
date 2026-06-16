@@ -1,7 +1,7 @@
 # Package configurations
 [package]
 name = "pipx"
-description = "Composable pipelines in Rust — define steps, chain transformations, and handle errors with elegance."
+description = "Composable pipelines for Rust with synchronous and asynchronous execution, middleware-style processing, and predictable data flow."
 keywords.workspace = true
 authors.workspace = true
 license.workspace = true

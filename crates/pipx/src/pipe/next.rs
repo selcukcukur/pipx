@@ -1,28 +1,31 @@
 use crate::{PipelineError, PipelineResult, PipelineStep};
 
-/// The continuation object passed to middleware pipes.
+/// Pipeline continuation.
 ///
-/// `Next` is inspired by Laravel's pipeline middleware flow. A middleware may call
-/// [`Next::handle`] to continue, return early to short-circuit, or modify the
-/// returned value after the rest of the stack has completed.
+/// `Next` represents the remaining execution chain after the current step.
+/// A step can call [`Next::handle`] to continue the pipeline, return early to
+/// stop execution, wrap the downstream result, or return an error.
 ///
 /// **Generics**
-/// - `TPassable` - The type of the value flowing through the middleware pipeline.
-/// - `TError` - The error type returned when any pipe fails.
+/// - `TPassable` - The value being passed through the pipeline.
+/// - `TError` - The error type returned by pipeline steps.
 pub struct Next<'a, TPassable, TError = PipelineError> {
+    /// The remaining pipeline steps.
     pipes: &'a [PipelineStep<TPassable, TError>],
+
+    /// The destination executed after all steps have completed.
     destination: &'a dyn Fn(TPassable) -> PipelineResult<TPassable, TError>,
 }
 
 impl<'a, TPassable, TError> Next<'a, TPassable, TError> {
-    /// Creates a continuation for the remaining middleware stack.
+    /// Creates a pipeline continuation.
     ///
     /// **Parameters**
-    /// - `pipes` - The remaining middleware pipes to execute.
-    /// - `destination` - The final closure called after all middleware has run.
+    /// - `pipes` - The remaining pipeline steps.
+    /// - `destination` - The final callback executed after all steps have completed.
     ///
     /// **Returns**
-    /// - A `Next` value that can continue the middleware chain.
+    /// - [`Next`] - A continuation for the remaining pipeline execution.
     pub(crate) fn new(
         pipes: &'a [PipelineStep<TPassable, TError>],
         destination: &'a dyn Fn(TPassable) -> PipelineResult<TPassable, TError>,
@@ -30,14 +33,14 @@ impl<'a, TPassable, TError> Next<'a, TPassable, TError> {
         Self { pipes, destination }
     }
 
-    /// Continues the middleware chain with the given passable value.
+    /// Continues the pipeline execution.
     ///
     /// **Parameters**
-    /// - `passable` - The value that should be passed to the next middleware.
+    /// - `passable` - The value that should be passed to the next pipeline step.
     ///
     /// **Returns**
-    /// - `Ok(TPassable)` - The remaining chain completed successfully.
-    /// - `Err(TError)` - A later middleware or destination failed.
+    /// - `Ok(TPassable)` - The value produced after the remaining pipeline steps have completed successfully.
+    /// - `Err(TError)` - The pipeline execution failed before reaching the destination.
     pub fn handle(self, passable: TPassable) -> PipelineResult<TPassable, TError> {
         if let Some((pipe, rest)) = self.pipes.split_first() {
             let next = Next::new(rest, self.destination);

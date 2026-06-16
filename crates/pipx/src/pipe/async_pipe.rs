@@ -1,15 +1,27 @@
-use std::future::Future;
-use std::pin::Pin;
+use crate::{AsyncNext, AsyncPipelineFuture, PipelineError};
 
-use crate::pipe::AsyncNext;
-use crate::{PipelineError, PipelineResult};
-
-/// An asynchronous middleware pipe that can decide whether to call the next step.
+/// Defines an asynchronous pipeline step.
+///
+/// An async pipe receives the current value and an [`AsyncNext`] continuation.
+/// It may continue the pipeline, stop execution early, wrap the downstream
+/// result, or return an error.
+///
+/// **Generics**
+/// - `TPassable` - The value processed by the pipeline.
+/// - `TError` - The error type returned by the pipe.
 pub trait AsyncPipe<TPassable, TError = PipelineError> {
-    /// Handles a passable value and optionally continues the async chain.
+    /// Handles the current pipeline value asynchronously.
+    ///
+    /// **Parameters**
+    /// - `passable` - The current value being passed through the pipeline.
+    /// - `next` - The continuation for the remaining asynchronous pipeline steps.
+    ///
+    /// **Returns**
+    /// - `Ok(TPassable)` - The value produced by the pipe or the remaining asynchronous pipeline steps.
+    /// - `Err(TError)` - The pipe failed and stopped pipeline execution.
     fn handle<'a>(
         &'a self,
         passable: TPassable,
         next: AsyncNext<'a, TPassable, TError>,
-    ) -> Pin<Box<dyn Future<Output = PipelineResult<TPassable, TError>> + Send + 'a>>;
+    ) -> AsyncPipelineFuture<'a, TPassable, TError>;
 }
