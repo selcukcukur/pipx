@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use pipx::{steps, Next, Pipe, Pipeline, PipelineResult};
+use pipx::{Next, Pipe, Pipeline, PipelineResult, steps};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct Event {
@@ -142,10 +142,7 @@ fn full_pipeline_stress_processes_one_thousand_items() {
 fn empty_stress_batch_short_circuits_cleanly() {
     let output = Pipeline::new()
         .send(Vec::<Event>::new())
-        .through(steps![
-            RejectEmptyBatch,
-            AttachTenant("never"),
-        ])
+        .through(steps![RejectEmptyBatch, AttachTenant("never"),])
         .then_return()
         .unwrap();
 

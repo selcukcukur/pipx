@@ -1,8 +1,8 @@
 pub mod errors;
+pub mod macros;
 pub mod pipe;
 pub mod pipeline;
 pub mod types;
-pub mod macros;
 
 pub use crate::errors::*;
 pub use crate::pipe::*;

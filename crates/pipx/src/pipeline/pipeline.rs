@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use crate::{FinallyCallback, Next, Pipe, PipelineError, PipelineResult, PipelineStep};
+use std::sync::Arc;
 
 /// Composable pipeline executor.
 ///
@@ -178,7 +178,15 @@ where
     {
         match self.then_return() {
             | Ok(passable) => Ok(passable),
+
+            // A pipeline cannot execute without an initial value.
+            //
+            // `InputMissing` indicates a pipeline configuration error rather than
+            // a failure that occurred while processing a value. Recovery callbacks
+            // are only intended to handle execution failures, so this error is
+            // returned unchanged to the caller.
             | Err(PipelineError::InputMissing) => Err(PipelineError::InputMissing),
+
             | Err(err) => Ok(recovery(err)),
         }
     }

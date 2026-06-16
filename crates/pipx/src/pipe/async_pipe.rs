@@ -2,7 +2,7 @@ use std::future::Future;
 use std::pin::Pin;
 
 use crate::pipe::AsyncNext;
-use crate::{AsyncDestination, AsyncPipelineStep, PipelineError, PipelineResult};
+use crate::{PipelineError, PipelineResult};
 
 /// An asynchronous middleware pipe that can decide whether to call the next step.
 pub trait AsyncPipe<TPassable, TError = PipelineError> {

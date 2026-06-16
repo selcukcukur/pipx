@@ -39,12 +39,23 @@ pub type PipelineStep<TPassable, TError = PipelineError> =
 pub type AsyncPipelineStep<TPassable, TError = PipelineError> =
     Arc<dyn AsyncPipe<TPassable, TError> + Send + Sync>;
 
-pub type FinallyCallback<TPassable> = Box<dyn Fn(&PipelineResult<TPassable>) + Send + Sync>;
-
+/// Boxed future returned by asynchronous pipeline operations.
+///
+/// **Generics**
+/// - `TPassable` - The value produced by the asynchronous operation.
+/// - `TError` - The error type returned when the operation fails.
 #[cfg(feature = "async")]
-pub type AsyncPipeFuture<'a, TPassable, TError = PipelineError> =
+pub type AsyncPipelineFuture<'a, TPassable, TError = PipelineError> =
     Pin<Box<dyn Future<Output = PipelineResult<TPassable, TError>> + Send + 'a>>;
 
+/// Final callback used by asynchronous pipeline continuations.
+///
+/// **Generics**
+/// - `TPassable` - The value passed to the destination callback.
+/// - `TError` - The error type returned when the destination fails.
 #[cfg(feature = "async")]
-pub type AsyncDestination<'a, TPassable, TError = PipelineError> =
-    dyn Fn(TPassable) -> AsyncPipeFuture<'a, TPassable, TError> + Sync + 'a;
+pub type AsyncPipelineDestination<'a, TPassable, TError = PipelineError> =
+    dyn Fn(TPassable) -> AsyncPipelineFuture<'a, TPassable, TError> + Sync + 'a;
+
+
+pub type FinallyCallback<TPassable> = Box<dyn Fn(&PipelineResult<TPassable>) + Send + Sync>;
